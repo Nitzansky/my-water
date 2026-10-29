@@ -1,0 +1,70 @@
+import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/ui";
+import { SITE } from "@/lib/site";
+
+// The new site's own statement. Original wording is kept wherever it is still true; the lines about
+// the WordPress accessibility toolbar and WCAG 2.0 were replaced with what this site actually does.
+// Update LAST_REVIEWED after every accessibility review.
+const LAST_REVIEWED = "2026-10-30";
+
+export const metadata: Metadata = {
+  title: { absolute: "הצהרת נגישות | myWater" },
+  description: "הצהרת הנגישות של אתר myWater: רמת הנגישות, ההתאמות שבוצעו, מגבלות ידועות ופרטי רכז הנגישות.",
+  alternates: { canonical: "/accessibility/" },
+};
+
+const DONE = [
+  "מבנה סמנטי של כותרות, אזורים ורשימות, ושפת עמוד (עברית, מימין לשמאל) מוגדרת לטכנולוגיות מסייעות.",
+  "ניווט מלא במקלדת, כולל תפריטים נפתחים, חיפוש, סל הקניות וטפסים, עם סימון פוקוס ברור.",
+  "קישור „דילוג לתוכן” בראש כל עמוד.",
+  "טקסט חלופי לתמונות מוצרים; תמונות קישוטיות מוסתרות מקוראי מסך.",
+  "ניגודיות צבעים בין טקסט לרקע ברמת AA לפחות.",
+  "תמיכה בהגדלת טקסט ובזום של הדפדפן עד 200% ותצוגה תקינה במסכים צרים, ללא גלילה אופקית.",
+  "תוויות, הנחיות והודעות שגיאה בטפסים, והודעות קוליות על הוספת מוצר לסל.",
+  "כפתורים ואזורי לחיצה בגודל של 44 פיקסלים לפחות.",
+  "כיבוד הגדרת „הפחתת תנועה” של מערכת ההפעלה — האנימציות מושבתות.",
+];
+
+export default function AccessibilityStatement() {
+  const date = new Date(LAST_REVIEWED).toLocaleDateString("he-IL", { year: "numeric", month: "long", day: "numeric" });
+  return (
+    <div className="container page">
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <Breadcrumbs items={[{ label: "הצהרת נגישות" }]} />
+        <h1 className="h1">הצהרת נגישות</h1>
+      </div>
+      <section className="glass panel content-panel">
+        <div className="prose">
+          <p>אתר אינטרנט נגיש הוא אתר המאפשר לאנשים עם מוגבלות ולאנשים מבוגרים לגלוש באותה רמה של יעילות והנאה ככל הגולשים.</p>
+          <p>אנחנו מאמינים ופועלים למען שיוויון הזדמנויות במרחב האינטרנטי לבעלי לקויות מגוונות ו/או המסתייעים בטכנולוגיות עזר לשימוש במחשב.</p>
+
+          <h2>נגישות האתר</h2>
+          <p>אתר זה עומד בדרישות תקנות שיוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע&quot;ג 2013.</p>
+          <p>האתר תואם את המלצות התקן הישראלי (ת&quot;י 5568) לנגישות תכנים באינטרנט ברמת AA ואת הנחיות WCAG 2.2 ברמת AA מאת ארגון W3C.</p>
+          <p>כמו כן, מותאם לתצוגה בדפדפנים הנפוצים ולשימוש בטלפון הסלולרי.</p>
+
+          <h2>תיקונים שבוצעו</h2>
+          <p>באתר זה בוצעו התאמות נגישות קפדניות הכוללות בין היתר מימוש סמנטי ואינפורמטיבי עבור טכנולוגיות מסייעות, התאמות צבעים, עריכת גודל טקסט, וכן הוספת תוויות עזר והנחיות בטפסים לטובת כלל הגולשים.</p>
+          <h3>חלק מהדברים שבוצעו באתר</h3>
+          <ul>{DONE.map((d) => <li key={d}>{d}</li>)}</ul>
+
+          <h2>מגבלות ידועות</h2>
+          <p>יש לציין כי למרות מאמצנו להנגיש את כלל הדפים באתר, המסמכים המצורפים (כגון PDF, Word, Excel), מפות מוטמעות של Google ותכנים של צד שלישי עשויים שלא להיות נגישים במלואם, ואנו פועלים להשלים זאת.</p>
+          <p>במידה ונדרש לכם מסמך המופיע באתר והוא אינו נגיש, אנא פנו אלינו עם קישור למקום ונדאג לכך בהקדם.</p>
+          <p>במידה ומצאתם רכיב או עמוד שלא נגיש באתר נשמח אם תפנו אלינו ואנחנו נדאג לתקן בהקדם.</p>
+
+          <h2>יצירת קשר</h2>
+          <p>אם במהלך הגלישה באתר נתקלת בבעיה בנושא נגישות נשמח אם תדווחו לנו ואנחנו נדאג לתקן בהקדם.</p>
+          <h3>פרטים של רכז נגישות בארגון</h3>
+          <ul>
+            <li>מייל: <a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+            <li>טלפון: <a href={SITE.phoneHref} dir="ltr">{SITE.phone}</a></li>
+            <li>כתובת: {SITE.address}</li>
+          </ul>
+
+          <p>תאריך עדכון ההצהרה: <time dateTime={LAST_REVIEWED}>{date}</time></p>
+        </div>
+      </section>
+    </div>
+  );
+}

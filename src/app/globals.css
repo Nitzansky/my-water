@@ -1,26 +1,191 @@
 @import "tailwindcss";
 
+/* ---- design tokens (DESIGN-SYSTEM / README of the handoff) ------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #0f2a3a;
+  --body: #2e4d5e;
+  --muted: #4a6676;
+  --subtle: #4a6676; /* counters; AA (≥4.5:1) on the light background and glass cards */
+  --brand: #0068b3;
+  --brand-hover: #00528f;
+  --tint: #e3f1f8;
+  --on-dark: #fff;
+  --on-dark-muted: #c9dde8;
+  --wa: #25d366;
+  --wa-hover: #1ebe5b;
+  --line: rgba(15, 42, 58, 0.12);
+  --line-strong: rgba(15, 42, 58, 0.16);
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.85);
+  --shadow-float: 0 12px 40px rgba(15, 42, 58, 0.12);
+  --shadow-brand: 0 10px 24px rgba(0, 104, 179, 0.22);
+  --gutter: clamp(20px, 5vw, 80px);
+  --header-h: 76px;
+  /* "drop" radii: three large corners, bottom-left nearly sharp. Swap to plain radii here. */
+  --r-14: 20px 20px 20px 5px;
+  --r-20: 30px 30px 30px 6px;
+  --r-24: 36px 36px 36px 7px;
+  --r-28: 42px 42px 42px 8px;
+  --font-display: var(--font-frank), "Frank Ruhl Libre", serif;
+  --font-ui: var(--font-assistant), "Assistant", system-ui, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-tint: var(--tint);
+  --font-display: var(--font-display);
+  --font-ui: var(--font-ui);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ---- base -------------------------------------------------------------------------------- */
+html { scroll-padding-top: calc(var(--header-h) + 16px); }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: #dfeaf2;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--brand); }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 4px; }
+img { max-width: 100%; height: auto; }
+input[type="search"]::-webkit-search-cancel-button { display: none; }
+
+.skip-link {
+  position: absolute; inset-inline-start: 16px; top: -100px; z-index: 100;
+  padding: 12px 20px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 700;
+}
+.skip-link:focus { top: 12px; color: #fff; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* fixed background sampled from the hero photo */
+.site-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; background: #dfeaf2; }
+.site-bg::before {
+  content: ""; position: absolute; inset: 0; background-color: #dfeaf2;
+  background-image:
+    radial-gradient(ellipse 55% 45% at 100% 0%, #bfddf6 0%, rgba(191, 221, 246, 0) 70%),
+    radial-gradient(ellipse 50% 50% at 75% 45%, #90bee5 0%, rgba(144, 190, 229, 0) 70%),
+    radial-gradient(ellipse 45% 55% at 50% 40%, #83a9ca 0%, rgba(131, 169, 202, 0) 65%),
+    radial-gradient(ellipse 40% 60% at 0% 30%, #f3e5d5 0%, rgba(243, 229, 213, 0) 70%),
+    radial-gradient(ellipse 55% 45% at 15% 100%, #f2dccd 0%, rgba(242, 220, 205, 0) 70%),
+    radial-gradient(ellipse 60% 45% at 80% 100%, #e9e8e8 0%, rgba(233, 232, 232, 0) 70%);
+}
+.site-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.18) 45%, rgba(255, 255, 255, 0.34) 100%);
+}
+
+/* ---- layout ------------------------------------------------------------------------------ */
+.container { max-width: 1240px; margin-inline: auto; padding-inline: var(--gutter); }
+.page { padding-block: 24px 96px; display: flex; flex-direction: column; gap: 40px; }
+
+/* ---- type -------------------------------------------------------------------------------- */
+.h1 { margin: 0; font: 300 clamp(44px, 6.4vw, 96px)/0.98 var(--font-display); letter-spacing: -0.03em; text-wrap: balance; }
+.h1-sm { margin: 0; font: 300 clamp(36px, 4.6vw, 64px)/1.02 var(--font-display); letter-spacing: -0.025em; text-wrap: balance; }
+.h2 { margin: 0; font: 300 clamp(28px, 3.2vw, 44px)/1.1 var(--font-display); letter-spacing: -0.02em; text-wrap: balance; }
+.lead { margin: 0; font: 400 clamp(17px, 1.4vw, 20px)/1.55 var(--font-ui); color: var(--body); text-wrap: pretty; max-width: 640px; }
+.kicker { font: 700 13px/1.3 var(--font-ui); color: var(--brand); }
+.price { font: 400 28px/1 var(--font-display); color: var(--ink); white-space: nowrap; }
+.price del { font-size: 0.62em; color: var(--muted); margin-inline-start: 8px; }
+
+/* ---- surfaces ---------------------------------------------------------------------------- */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border-radius: var(--r-24);
+}
+.panel { padding: clamp(22px, 3vw, 32px); display: flex; flex-direction: column; gap: 14px; }
+.dark-band {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 20px 48px; align-items: center;
+  padding: clamp(28px, 4vw, 44px); border-radius: var(--r-28); background: var(--ink); color: #fff;
+}
+.dark-band a:hover { color: inherit; }
+.glow { background: radial-gradient(ellipse 80% 70% at 50% 40%, rgba(255, 255, 255, 0.95), rgba(214, 234, 242, 0.7)); }
+
+/* Low-end phones: blur is expensive; fall back to a more opaque fill. */
+@media (max-width: 600px) {
+  .glass { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255, 255, 255, 0.82); }
+}
+
+/* ---- buttons ----------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 50px; padding: 0 24px; border-radius: 999px; border: 0; cursor: pointer;
+  font: 600 16px/1 var(--font-ui); white-space: nowrap; transition: background-color 0.15s, color 0.15s;
+}
+.btn-primary { background: var(--brand); color: #fff; box-shadow: var(--shadow-brand); }
+.btn-primary:hover { background: var(--brand-hover); color: #fff; }
+.btn-white { background: #fff; color: var(--ink); }
+.btn-white:hover { background: var(--tint); color: var(--ink); }
+.btn-outline-light { border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; }
+.btn-outline-light:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.btn-wa { background: var(--wa); color: #0b3d1f; }
+.btn-wa:hover { background: var(--wa-hover); color: #0b3d1f; }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35); border: 1px solid rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); font: 600 15px/1 var(--font-ui); color: var(--ink); cursor: pointer;
+}
+.pill:hover { background: rgba(255, 255, 255, 0.7); color: var(--ink); }
+
+/* split buy button: add to cart (brand) | quick buy (ink) */
+.split { display: flex; align-items: stretch; height: 44px; border-radius: 999px; overflow: hidden; }
+.split > * {
+  display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 0 16px; cursor: pointer;
+  font: 600 14px/1 var(--font-ui); color: #fff; white-space: nowrap;
+}
+.split > :first-child { background: var(--brand); }
+.split > :first-child:hover { background: var(--brand-hover); color: #fff; }
+.split > :last-child { background: var(--ink); border-inline-start: 1px solid rgba(255, 255, 255, 0.35); }
+.split > :last-child:hover { background: #1d4560; color: #fff; }
+.split > :disabled { background: #7d93a0; cursor: not-allowed; }
+.split-lg { height: 56px; box-shadow: var(--shadow-brand); }
+.split-lg > * { font-size: 17px; padding: 0 22px; }
+.split-lg > :first-child { flex: 1; }
+
+/* quantity stepper */
+.stepper { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line-strong); background: rgba(255, 255, 255, 0.7); }
+.stepper button { width: 44px; height: 44px; border: 0; background: transparent; font: 400 20px/1 var(--font-ui); cursor: pointer; color: var(--ink); border-radius: 999px; }
+.stepper output { min-width: 32px; text-align: center; font: 600 16px/1 var(--font-ui); }
+
+/* chips */
+.tag-chip { padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.85); font: 700 12px/1 var(--font-ui); color: var(--brand); }
+
+/* ---- forms ------------------------------------------------------------------------------- */
+.field {
+  width: 100%; min-height: 52px; padding: 0 16px; box-sizing: border-box; border-radius: var(--r-14);
+  border: 1px solid var(--line-strong); background: rgba(255, 255, 255, 0.85); font: 400 16px/1.2 var(--font-ui); color: var(--ink);
+}
+textarea.field { padding: 14px 16px; min-height: 120px; resize: vertical; }
+.field:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+/* ---- long-form content from WordPress ------------------------------------------------------ */
+.prose { font: 400 18px/1.75 var(--font-ui); color: var(--body); overflow-wrap: anywhere; }
+.prose > * + * { margin-top: 1em; }
+.prose h2 { font: 300 clamp(26px, 2.8vw, 38px)/1.15 var(--font-display); color: var(--ink); letter-spacing: -0.02em; margin-top: 1.6em; }
+.prose h3 { font: 600 21px/1.35 var(--font-ui); color: var(--ink); margin-top: 1.4em; }
+.prose h4, .prose h5, .prose h6 { font: 600 18px/1.4 var(--font-ui); color: var(--ink); }
+.prose p, .prose ul, .prose ol, .prose blockquote, .prose table { margin-block: 0; }
+.prose ul, .prose ol { padding-inline-start: 1.4em; }
+.prose ul { list-style: disc; }
+.prose ol { list-style: decimal; }
+.prose li + li { margin-top: 0.35em; }
+.prose a { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+.prose strong, .prose b { color: var(--ink); font-weight: 700; }
+.prose img { border-radius: var(--r-14); display: block; }
+.prose blockquote { border-inline-start: 3px solid var(--brand); padding-inline-start: 16px; color: var(--ink); }
+.prose table { width: 100%; border-collapse: collapse; font-size: 16px; display: block; overflow-x: auto; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 10px 12px; text-align: start; vertical-align: top; }
+.prose iframe { width: 100%; aspect-ratio: 16/9; height: auto; border: 0; border-radius: var(--r-14); }
+.prose > div { display: flex; flex-direction: column; gap: 1em; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
