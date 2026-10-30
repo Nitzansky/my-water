@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   // WordPress URLs end with "/"; keeping that means every old URL keeps working as-is.
   trailingSlash: true,
   basePath,
+  // The build prerenders ~310 pages from the live WordPress (a shared host): few workers keep the load gentle.
+  experimental: { cpus: 2 },
   ...(staticExport ? { output: "export" as const } : {}),
   images: staticExport
     ? { loader: "custom", loaderFile: "./src/lib/static-image-loader.ts" }

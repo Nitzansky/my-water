@@ -53,10 +53,30 @@ const pathOf = (url: string) => decode(url.replace(/^https?:\/\/(www\.)?my-water
 const entities = (s: string) =>
   s.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n)).replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&nbsp;/g, " ");
 
-async function get<T>(endpoint: string): Promise<{ data: T; totalPages: number }> {
-  const res = await fetch(`${WP}${endpoint}`, { next: { revalidate: REVALIDATE }, headers: { "User-Agent": "myWater-frontend" } });
-  if (!res.ok) throw new Error(`WordPress ${res.status} for ${endpoint}`);
-  return { data: (await res.json()) as T, totalPages: Number(res.headers.get("x-wp-totalpages") ?? 1) };
+// The shared host occasionally answers 503/429 under load (e.g. during a full build): retry with backoff.
+const RETRYABLE = new Set([429, 500, 502, 503, 504]);
+
+// Pages rendered together (a build prerenders ~310) share one request per endpoint for a minute,
+// so the live site sees a handful of requests instead of hundreds.
+const MEMO_MS = 60_000;
+const memo = new Map<string, { t: number; p: Promise<{ data: unknown; totalPages: number }> }>();
+
+function get<T>(endpoint: string): Promise<{ data: T; totalPages: number }> {
+  const hit = memo.get(endpoint);
+  if (hit && Date.now() - hit.t < MEMO_MS) return hit.p as Promise<{ data: T; totalPages: number }>;
+  const p = fetchWp<T>(endpoint);
+  memo.set(endpoint, { t: Date.now(), p });
+  p.catch(() => memo.delete(endpoint));
+  return p;
+}
+
+async function fetchWp<T>(endpoint: string): Promise<{ data: T; totalPages: number }> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${WP}${endpoint}`, { next: { revalidate: REVALIDATE }, headers: { "User-Agent": "myWater-frontend" } });
+    if (res.ok) return { data: (await res.json()) as T, totalPages: Number(res.headers.get("x-wp-totalpages") ?? 1) };
+    if (!RETRYABLE.has(res.status) || attempt >= 3) throw new Error(`WordPress ${res.status} for ${endpoint}`);
+    await new Promise((r) => setTimeout(r, 1500 * 2 ** attempt));
+  }
 }
 
 async function getAll<T>(endpoint: string): Promise<T[]> {

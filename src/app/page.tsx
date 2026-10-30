@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { GlassStory } from "@/components/glass/GlassStory";
 import { HeroCarousel } from "@/components/HeroCarousel";
+import { WaterStory } from "@/components/story/WaterStory";
 import { JsonLd, ProductGrid } from "@/components/ui";
 import { BASE_PATH, SITE } from "@/lib/site";
 import { getBestsellers, getEntryByPath, getProducts, type Product } from "@/lib/wp";
@@ -44,8 +44,8 @@ const FAQ = [
   { q: "באילו אזורים אתם נותנים שירות?", a: "אנחנו בכפר סבא ומשרתים את האזור. התקשרו לבדיקת זמינות." },
 ];
 
-// Products for the 3D "what's in your glass" stages (design picks: original filter, compatible filter, RO system).
-const GLASS_PRODUCT_IDS = [5384, 6328, 1514];
+// Products for the 3D story's filter stages (design picks: original filter, compatible filter, RO system).
+const STORY_PRODUCT_IDS = [5384, 6328, 1514];
 
 function imageFor(products: Product[], categoryPath: string) {
   const p = products.find((x) => x.inStock && x.images[0]?.enhanced && x.categories.some((c) => c.path.startsWith(categoryPath)));
@@ -108,8 +108,17 @@ export default async function Home() {
             })}
           </ul>
         </section>
+      </div>
 
-        <section aria-labelledby="best" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <WaterStory
+        products={STORY_PRODUCT_IDS.map((id) => {
+          const p = products.find((x) => x.id === id && x.inStock);
+          return p ? { id: p.id, name: p.name, path: p.path, price: p.price, image: p.images[0]?.src ?? null, inStock: p.inStock } : null;
+        })}
+      />
+
+      <div className="container page" style={{ gap: 72 }}>
+        <section aria-labelledby="best" data-snap="הנמכרים ביותר" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div className="store-head">
             <h2 id="best" className="h2">הנמכרים ביותר</h2>
             <Link href="/shop/" style={{ font: "600 1rem/1 var(--font-ui)", color: "var(--brand)" }}>לכל החנות ←</Link>
@@ -135,13 +144,6 @@ export default async function Home() {
             </div>
           </div>
         </section>
-
-        <GlassStory
-          products={GLASS_PRODUCT_IDS.map((id) => {
-            const p = products.find((x) => x.id === id && x.inStock);
-            return p ? { name: p.name, path: p.path, price: p.price, image: p.images[0]?.src ?? null, inStock: p.inStock } : null;
-          })}
-        />
 
         <section aria-labelledby="faq-title" style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 860 }}>
           <h2 id="faq-title" className="h2">מה כדאי לדעת.</h2>
