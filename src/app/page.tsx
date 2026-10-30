@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { WaterStory } from "@/components/story/WaterStory";
+import { HeroBackdrop } from "@/components/hero/HeroBackdrop";
 import { JsonLd, ProductGrid } from "@/components/ui";
 import { BASE_PATH, SITE } from "@/lib/site";
 import { getBestsellers, getEntryByPath, getProducts, type Product } from "@/lib/wp";
@@ -62,8 +63,8 @@ export default async function Home() {
 
   return (
     <>
+      <HeroBackdrop />
       <section className="hero" aria-labelledby="hero-title">
-        <Image src="/hero-tami.webp" alt="" fill priority sizes="100vw" className="hero__bg" />
         <div className="hero__inner">
           <div className="hero__content">
             <span className="kicker">מסננים לתמי 4 וברי מים · כפר סבא</span>

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { BuyButtons } from "../BuyButtons";
 import { formatPrice } from "../ui";
 import type { StoryScene } from "./story-scene";
+import { FADE, HANDOFF, clamp } from "./timing";
 
 export type StoryProduct = { id: number; name: string; path: string; price: number; image: string | null; inStock: boolean };
 
@@ -16,7 +17,6 @@ const STEPS = [
   { snap: "צלול", title: "צלול.", text: "מים שקופים וטעימים — כמו שהם צריכים להיות.", label: "הכי צלול", fallback: { name: "מערכת אוסמוזה הפוכה", path: "/product-category/אוסמוזה-הפוכה/" } },
 ];
 
-const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 // "on": live 3D; "off": weak device, data saver or reduced motion — the story becomes a normal stacked section.
@@ -71,7 +71,6 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
   const [nav, setNav] = useState<{ show: boolean; up: boolean; label: string }>({ show: false, up: false, label: "" });
   const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const zoom = useRef<HTMLDivElement>(null);
   const discover = useRef<HTMLElement>(null);
 
   // Re-checked live: toggling "עצירת אנימציות" or the system's reduce-motion switches the 3D on/off.
@@ -91,20 +90,18 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
   // Load the 3D when the story is within ~1.5 screens, then drive it from the scroll position.
   useEffect(() => {
     if (mode !== "on") return;
-    const el = root.current!, st = stage.current!, layer = zoom.current!, target = discover.current!;
+    const el = root.current!, st = stage.current!, target = discover.current!;
     let scene: StoryScene | null = null, disposed = false, raf = 0;
-
-    const onFrame = ({ q }: { q: number }) => {
-      // A page-coloured veil over the close-up, dissolving as the systems section slides away.
-      layer.style.opacity = String(1 - clamp(q / 0.45));
-    };
 
     const reveals = [...el.querySelectorAll<HTMLElement>("[data-reveal]")];
     const tick = () => {
       raf = requestAnimationFrame(tick);
       const vh = innerHeight, y = scrollY, start = top(el), dStart = top(target);
       const end = start + el.offsetHeight - vh;
-      scene?.setIntro(clamp((y - start) / Math.max(1, dStart - start)));
+      // The hero photo has zoomed into the bar by `handoff`: fade the 3D in over it, then zoom out.
+      const handoff = start + HANDOFF * vh;
+      st.style.opacity = String(clamp((y - handoff) / (FADE * vh)));
+      scene?.setIntro(clamp((y - handoff) / Math.max(1, dStart - handoff)));
       scene?.setProgress(clamp((y - dStart) / Math.max(1, end - dStart)));
       for (const r of reveals) {
         const R = r.getBoundingClientRect();
@@ -121,7 +118,7 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
         const { mountStoryScene } = await import("./story-scene");
         if (disposed) return;
         try {
-          scene = await mountStoryScene(st, { onFrame, onSlow: () => setReason("slow") });
+          scene = await mountStoryScene(st, { onSlow: () => setReason("slow") });
           if (disposed) scene.dispose();
           else st.dataset.ready = "true";
         } catch {
@@ -221,8 +218,6 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
     <div ref={root} className="story" data-mode={mode}>
       <div className="story__sticky" aria-hidden="true">
         <div ref={stage} className="story__stage" />
-        {/* Page-coloured plate on the bar's screen: the zoom-out starts from "nothing changed". */}
-        <div ref={zoom} className="story__zoom" />
       </div>
 
       <div className="story__intro" />

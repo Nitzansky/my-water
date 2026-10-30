@@ -1,5 +1,5 @@
 // Scroll-driven 3D for the home "what's in your glass" story — a port of the design's dispenser/scroll.js
-// ("screen" mode): an intro that zooms out from the bar's screen, then the bar turns and the glass fills
+// ("screen" mode): an intro that takes over from the hero photo's close-up of the bar and zooms out, then the bar turns and the glass fills
 // as the visitor scrolls. Loaded on demand by WaterStory; three.js never weighs on the initial page load.
 import * as THREE from "three";
 import { buildDispenser, DIM } from "../glass/model.js";
@@ -10,7 +10,7 @@ export type StoryScene = {
   setIntro: (q: number) => void;
   dispose: () => void;
 };
-type Options = { onFrame?: (f: { q: number }) => void; onSlow?: () => void };
+type Options = { onSlow?: () => void };
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const range = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
@@ -82,7 +82,7 @@ function contactShadow() {
   return new THREE.CanvasTexture(c);
 }
 
-export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Options = {}): Promise<StoryScene> {
+export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {}): Promise<StoryScene> {
   const phone = Math.min(innerWidth, innerHeight) < 700;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
   // Resolution steps for the adaptive quality check below (the first is the normal one).
@@ -101,6 +101,9 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
   scene.environment = studioEnvironment(renderer);
   const model = buildDispenser({ maxAnisotropy: renderer.capabilities.getMaxAnisotropy() });
   scene.add(model.root);
+  // The whole bar: the intro starts on it centred at 95% of the view height — the hero photo's last shot.
+  const bar = new THREE.Box3().setFromObject(model.root);
+  const BC = bar.getCenter(new THREE.Vector3()), BH = bar.max.y - bar.min.y;
   const fx = new WaterFX({ materials: model.materials, glassProfile: model.glassProfile, tipY: DIM.tipY - DIM.grilleTop });
   fx.group.position.copy(model.glass.position);
   model.root.add(fx.group);
@@ -136,9 +139,6 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
     dirty = true;
   };
 
-  // The bar's touchscreen: the intro starts with it filling the view.
-  const box = new THREE.Box3().setFromObject(model.screen.mesh);
-  const SC = box.getCenter(new THREE.Vector3()), SS = box.getSize(new THREE.Vector3()), Z = V(0, 0, 1);
 
   let p = 0, q = 0, pourUntil = 0, dirty = true;
   let cur: { pos: THREE.Vector3; tgt: THREE.Vector3 } | null = null;
@@ -148,11 +148,11 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
   const step = (dt: number, t: number) => {
     let dist: number, side: number, up: number;
     if (q < 1) {
-      const o = K[0], d0 = Math.min(SS.y / 2 / tan, SS.x / 2 / (tan * camera.aspect));
-      const late = ease(range(q, 0.5, 1));
-      F.lerpVectors(SC, o.focus, late);
-      D.lerpVectors(Z, o.dir, late).normalize();
-      dist = d0 * Math.pow((o.dist * fitScale) / d0, ease(range(q, 0, 0.9)));
+      const o = K[0], d0 = BH / 0.95 / (2 * tan);
+      const late = ease(range(q, 0.3, 1));
+      F.lerpVectors(BC, o.focus, late);
+      D.copy(o.dir);
+      dist = d0 + (o.dist * fitScale - d0) * ease(q);
       side = o.side * late * (camera.aspect > 1.1 ? 0.5 : 0);
       up = lift * late;
     } else {
@@ -176,7 +176,6 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
     cur.tgt.lerp(Tg, k);
     camera.position.copy(cur.pos);
     camera.lookAt(cur.tgt);
-    onFrame?.({ q });
 
     const tv = fillAt(p) * fx.Vmax;
     fx.full = false;

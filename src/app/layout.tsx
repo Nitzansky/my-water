@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             name: "myWater",
             url: SITE.url,
             logo: `${SITE.url}/mywater-logo.png`,
-            image: `${SITE.url}/hero-tami.webp`,
+            image: `${SITE.url}/hero-dispenser.webp`,
             telephone: "+972-50-4032033",
             email: SITE.email,
             address: { "@type": "PostalAddress", streetAddress: SITE.street, addressLocality: SITE.city, addressCountry: "IL" },

@@ -229,7 +229,9 @@
 
 /* ---- home -------------------------------------------------------------------------------- */
 .hero { position: relative; min-height: calc(100svh - var(--header-h)); display: flex; align-items: center; overflow: hidden; margin-top: calc(-1 * var(--header-h)); padding-top: var(--header-h); }
-.hero__bg { object-fit: cover; object-position: 70% 50%; z-index: -1; }
+.hero-backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.hero-backdrop__layer { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform, opacity; }
+.hero__bg { object-fit: cover; object-position: 70% 50%; }
 .hero__inner { width: 100%; max-width: 1440px; margin-inline: auto; padding: 48px var(--gutter); display: flex; justify-content: flex-end; }
 .hero__content { width: min(100%, 520px); display: flex; flex-direction: column; gap: 18px; }
 .hero__title { margin: 0; font: 300 clamp(2.5rem, min(5.6vw, 8.6vh), 6.25rem)/0.95 var(--font-display); letter-spacing: -0.03em; color: var(--ink); }
@@ -266,7 +268,7 @@
 .system-card__more { font: 600 0.875rem/1 var(--font-ui); color: var(--brand); }
 @media (max-width: 760px) {
   .hero { min-height: auto; }
-  .hero__bg { object-position: 80% 30%; opacity: 0.55; }
+  .hero__bg { object-position: 80% 30%; opacity: var(--hero-bg-o, 0.55); }
   .hero__inner { padding-block: 32px; }
 }
 
@@ -402,11 +404,10 @@ html.a11y-text-xl .btn { white-space: normal; height: auto; min-height: 44px; te
 /* The stage sticks one screen early, under the systems section, which slides up like a curtain
    while the camera is already pulling back from the bar's screen. */
 .story:not([data-mode="off"]) { margin-top: -100lvh; }
-.story-cover { position: relative; z-index: 1; background: #dfeaf2; padding-bottom: 72px; }
+.story-cover { position: relative; z-index: 1; padding-bottom: 72px; }
 .story-cover > .container { padding-bottom: 0; }
 .story__sticky { position: sticky; top: 0; height: 100lvh; margin-bottom: -100lvh; z-index: 0; overflow: hidden; pointer-events: none; }
-.story__stage { position: absolute; inset: 0; }
-.story__zoom { position: absolute; inset: 0; background: #dfeaf2; will-change: opacity; }
+.story__stage { position: absolute; inset: 0; opacity: 0; }
 .story__intro { height: 160lvh; }
 .story__sec {
   position: relative; z-index: 1; min-height: 100svh; box-sizing: border-box; display: flex; flex-direction: column;
@@ -457,3 +458,5 @@ html.a11y-text-xl .btn { white-space: normal; height: auto; min-height: 44px; te
 @media (max-width: 600px) { .story-nav__label { display: none; } .story-nav { right: calc(16px + 60px); } }
 .story__note { display: none; margin: 0 auto; max-width: 560px; padding: 0 16px; text-align: center; font: 400 0.9375rem/1.5 var(--font-ui); color: var(--muted); }
 .story[data-mode="off"] .story__note { display: block; }
+/* The systems heading sits on the hero photo: a frosted backing keeps it readable. */
+.story-cover .h2 { align-self: flex-start; padding: 10px 20px; border-radius: 20px; background: rgba(255, 255, 255, 0.78); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
