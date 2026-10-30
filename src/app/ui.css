@@ -451,3 +451,5 @@ html.a11y-text-xl .btn { white-space: normal; height: auto; min-height: 44px; te
 }
 .story-nav__btn:hover { background: #fff; }
 @media (max-width: 600px) { .story-nav__label { display: none; } .story-nav { right: calc(16px + 60px); } }
+.story__note { display: none; margin: 0 auto; max-width: 560px; padding: 0 16px; text-align: center; font: 400 0.9375rem/1.5 var(--font-ui); color: var(--muted); }
+.story[data-mode="off"] .story__note { display: block; }

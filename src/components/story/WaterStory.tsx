@@ -21,19 +21,27 @@ const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2
 
 // "on": live 3D; "off": weak device, data saver or reduced motion — the story becomes a normal stacked section.
 type Mode = "pending" | "on" | "off";
+type OffReason = "a11y" | "motion" | "data" | "weak" | "webgl" | "slow" | null;
 
-function capable() {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
-  if (document.documentElement.classList.contains("a11y-stop-motion")) return false;
+// Why the 3D can't run here (null = it can). Settings the visitor chose are explained on the page.
+function offReason(): OffReason {
+  if (document.documentElement.classList.contains("a11y-stop-motion")) return "a11y";
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return "motion";
   const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
-  if (nav.connection?.saveData) return false;
-  if ((nav.deviceMemory ?? 8) <= 3 || (nav.hardwareConcurrency ?? 8) < 4) return false;
+  if (nav.connection?.saveData) return "data";
+  if ((nav.deviceMemory ?? 8) <= 3 || (nav.hardwareConcurrency ?? 8) < 4) return "weak";
   try {
-    return !!document.createElement("canvas").getContext("webgl2");
+    return document.createElement("canvas").getContext("webgl2") ? null : "webgl";
   } catch {
-    return false;
+    return "webgl";
   }
 }
+
+const OFF_NOTES: Partial<Record<Exclude<OffReason, null>, string>> = {
+  a11y: "האנימציה התלת־ממדית כבויה כי „עצירת אנימציות” מופעלת בתפריט הנגישות.",
+  motion: "האנימציה התלת־ממדית כבויה כי הגדרת „הפחתת תנועה” פעילה במכשיר.",
+  data: "האנימציה התלת־ממדית כבויה כי מצב חיסכון בנתונים פעיל.",
+};
 
 // Glide to a scroll position (the design's arrows): 500–1400ms, easeInOutCubic, cancelled by any input.
 function glide(y1: number) {
@@ -57,14 +65,28 @@ function glide(y1: number) {
 const top = (el: Element) => el.getBoundingClientRect().top + scrollY;
 
 export function WaterStory({ products }: { products: (StoryProduct | null)[] }) {
-  const [mode, setMode] = useState<Mode>("pending");
+  // undefined until checked on the client; failures found while running ("slow", "webgl") stick.
+  const [reason, setReason] = useState<OffReason | undefined>(undefined);
+  const mode: Mode = reason === undefined ? "pending" : reason ? "off" : "on";
   const [nav, setNav] = useState<{ show: boolean; up: boolean; label: string }>({ show: false, up: false, label: "" });
   const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const zoom = useRef<HTMLDivElement>(null);
   const discover = useRef<HTMLElement>(null);
 
-  useEffect(() => setMode(capable() ? "on" : "off"), []);
+  // Re-checked live: toggling "עצירת אנימציות" or the system's reduce-motion switches the 3D on/off.
+  useEffect(() => {
+    const check = () => {
+      const r = offReason();
+      setReason((prev) => (prev === "slow" || prev === "webgl" ? prev : r));
+    };
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    const mq = matchMedia("(prefers-reduced-motion: reduce)");
+    mq.addEventListener("change", check);
+    return () => { mo.disconnect(); mq.removeEventListener("change", check); };
+  }, []);
 
   // Load the 3D when the story is within ~1.5 screens, then drive it from the scroll position.
   useEffect(() => {
@@ -103,11 +125,11 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
         const { mountStoryScene } = await import("./story-scene");
         if (disposed) return;
         try {
-          scene = await mountStoryScene(st, { onFrame, onSlow: () => setMode("off") });
+          scene = await mountStoryScene(st, { onFrame, onSlow: () => setReason("slow") });
           if (disposed) scene.dispose();
           else st.dataset.ready = "true";
         } catch {
-          setMode("off");
+          setReason("webgl");
         }
       },
       { rootMargin: "150% 0px" },
@@ -209,6 +231,7 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
       </div>
 
       <div className="story__intro" />
+      {mode === "off" && reason && OFF_NOTES[reason] && <p className="story__note">{OFF_NOTES[reason]}</p>}
 
       <section ref={discover} id="discover" className="story__sec" data-snap="מה יש בכוס" aria-labelledby="story-title">
         <div className="story__panel" data-reveal>

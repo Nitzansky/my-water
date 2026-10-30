@@ -86,7 +86,10 @@ function contactShadow() {
 export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Options = {}): Promise<StoryScene> {
   const phone = Math.min(innerWidth, innerHeight) < 700;
   const renderer = new THREE.WebGLRenderer({ antialias: !phone, alpha: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, phone ? 1.5 : 2));
+  // Resolution steps for the adaptive quality check below (the first is the normal one).
+  const ratios = [Math.min(devicePixelRatio, phone ? 1.5 : 2), 1.25, 1, 0.75].filter((r, i, a) => i === 0 || r < a[0]);
+  let level = 0;
+  renderer.setPixelRatio(ratios[0]);
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -201,10 +204,12 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
   const ro = new ResizeObserver(resize);
   ro.observe(el);
 
-  // Render only while the stage is on screen and something is changing; watch the frame rate once.
+  // Render only while the stage is on screen and something is changing.
+  // Frame-rate check: skip a warm-up, then if the median frame is slower than ~22 fps lower the resolution
+  // a step and measure again; only when the lowest step is still too slow hand back to the plain layout.
   const timer = new THREE.Timer();
-  let raf = 0, visible = false, idleFrames = 0;
-  const samples: number[] = [];
+  let raf = 0, visible = false, idleFrames = 0, warmup = 45;
+  let samples: number[] = [];
   const frame = () => {
     raf = requestAnimationFrame(frame);
     timer.update();
@@ -215,17 +220,25 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
     else if (++idleFrames > 30) return; // settled: stop drawing until the next scroll
     dirty = false;
     renderer.render(scene, camera);
-    if (samples.length < 90 && rawDt > 0) {
+    if (warmup > 0) { warmup--; return; }
+    if (samples.length < 60 && rawDt > 0 && rawDt < 0.5) {
       samples.push(rawDt);
-      if (samples.length === 90) {
-        const median = [...samples].sort((a, b) => a - b)[45];
-        if (median > 0.045) onSlow?.(); // under ~22 fps: hand back to the plain layout
+      if (samples.length === 60) {
+        const median = [...samples].sort((a, b) => a - b)[30];
+        if (median > 0.045) {
+          if (level < ratios.length - 1) {
+            renderer.setPixelRatio(ratios[++level]);
+            resize();
+            samples = [];
+            warmup = 20;
+          } else onSlow?.();
+        }
       }
     }
   };
   const run = () => {
     const on = visible && !document.hidden;
-    if (on && !raf) { timer.reset(); dirty = true; frame(); }
+    if (on && !raf) { timer.reset(); dirty = true; warmup = Math.max(warmup, 20); frame(); }
     if (!on && raf) { cancelAnimationFrame(raf); raf = 0; }
   };
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; run(); });
