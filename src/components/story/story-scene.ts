@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import { buildDispenser, DIM } from "../glass/model.js";
 import { WaterFX } from "../glass/water.js";
+import { HANDOFF_FILL } from "./timing";
 
 export type StoryScene = {
   setProgress: (p: number) => void;
@@ -26,6 +27,8 @@ const KEYS: [number, Shot][] = [
   [1, shot(V(0, 0.205, 0.02), V(-0.55, 0.12, 1), 1.3)],
 ];
 const fillAt = (p: number) => range(p, 0.08, 0.6) * 0.95;
+// The hero photo's viewing angle: the intro's first shot uses it, then eases into KEYS[0].
+const PHOTO_DIR = V(0.45, 0.17, 1).normalize();
 
 function studioEnvironment(renderer: THREE.WebGLRenderer) {
   const s = new THREE.Scene();
@@ -101,8 +104,17 @@ export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {})
   scene.environment = studioEnvironment(renderer);
   const model = buildDispenser({ maxAnisotropy: renderer.capabilities.getMaxAnisotropy() });
   scene.add(model.root);
-  // The whole bar: the intro starts on it centred at 95% of the view height — the hero photo's last shot.
-  const bar = new THREE.Box3().setFromObject(model.root);
+  // Outline points of the bar's body (no glass): the intro's first shot is fitted so the bar's outline on
+  // screen matches the hero photo's last shot (centred, HANDOFF_FILL of the view height).
+  model.root.updateMatrixWorld(true);
+  const outline: THREE.Vector3[] = [];
+  model.dispenser.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh) return;
+    const pos = m.geometry.attributes.position, stride = Math.max(1, Math.floor(pos.count / 400));
+    for (let i = 0; i < pos.count; i += stride) outline.push(V(0, 0, 0).fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld));
+  });
+  const bar = new THREE.Box3().setFromObject(model.dispenser);
   const BC = bar.getCenter(new THREE.Vector3()), BH = bar.max.y - bar.min.y;
   const fx = new WaterFX({ materials: model.materials, glassProfile: model.glassProfile, tipY: DIM.tipY - DIM.grilleTop });
   fx.group.position.copy(model.glass.position);
@@ -128,6 +140,28 @@ export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {})
   const camera = new THREE.PerspectiveCamera(28, 1, 0.002, 20);
   const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   let fitScale = 1, lift = 0; // lift: on portrait phones the bar sits this fraction of the view above centre
+  const introF = V(0, 0, 0);
+  let introD = 1;
+  const fitIntro = () => {
+    const dir = PHOTO_DIR, v = V(0, 0, 0), right = V(0, 0, 0), up = V(0, 0, 0);
+    introF.copy(BC);
+    let d = BH / HANDOFF_FILL / (2 * tan);
+    for (let i = 0; i < 6; i++) {
+      camera.position.copy(introF).addScaledVector(dir, d);
+      camera.lookAt(introF);
+      camera.updateMatrixWorld();
+      let x0 = 1, x1 = -1, y0 = 1, y1 = -1;
+      for (const p of outline) {
+        v.copy(p).project(camera);
+        x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
+      }
+      right.setFromMatrixColumn(camera.matrixWorld, 0);
+      up.setFromMatrixColumn(camera.matrixWorld, 1);
+      introF.addScaledVector(right, ((x0 + x1) / 2) * d * tan * camera.aspect).addScaledVector(up, ((y0 + y1) / 2) * d * tan);
+      d *= (y1 - y0) / 2 / HANDOFF_FILL;
+    }
+    introD = d;
+  };
   const resize = () => {
     const w = el.clientWidth || 1, h = el.clientHeight || 1;
     renderer.setSize(w, h, false);
@@ -136,6 +170,7 @@ export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {})
     // Portrait phones: step back so the bar fits comfortably above the text panels.
     fitScale = Math.max(1, 0.95 / camera.aspect);
     lift = camera.aspect < 0.8 ? 0.2 : 0;
+    fitIntro();
     dirty = true;
   };
 
@@ -148,11 +183,11 @@ export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {})
   const step = (dt: number, t: number) => {
     let dist: number, side: number, up: number;
     if (q < 1) {
-      const o = K[0], d0 = BH / 0.95 / (2 * tan);
+      const o = K[0];
       const late = ease(range(q, 0.3, 1));
-      F.lerpVectors(BC, o.focus, late);
-      D.copy(o.dir);
-      dist = d0 + (o.dist * fitScale - d0) * ease(q);
+      F.lerpVectors(introF, o.focus, late);
+      D.lerpVectors(PHOTO_DIR, o.dir, late).normalize();
+      dist = introD + (o.dist * fitScale - introD) * ease(q);
       side = o.side * late * (camera.aspect > 1.1 ? 0.5 : 0);
       up = lift * late;
     } else {

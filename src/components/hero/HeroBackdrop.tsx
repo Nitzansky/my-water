@@ -5,7 +5,7 @@
 // composited layer per frame; without motion (reduced motion / "עצירת אנימציות") it just stays put.
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import { FADE, HANDOFF, clamp, ease } from "../story/timing";
+import { FADE, HANDOFF, HANDOFF_FILL, clamp, ease } from "../story/timing";
 
 // The photo's size and the bar inside it (px), for aiming the zoom.
 const IW = 1672, IH = 940;
@@ -34,8 +34,8 @@ export function HeroBackdrop() {
       const [px, py] = mobile ? [0.8, 0.3] : [0.7, 0.5];
       const b = Math.max(vw / IW, vh / IH);
       const cx0 = (vw - IW * b) * px + BAR.x * b, cy0 = (vh - IH * b) * py + BAR.y * b;
-      // End framing: the bar centred and filling 95% of the height — the 3D bar starts from the same shot.
-      const s = Math.pow(Math.max(1, (0.95 * vh) / (BAR.h * b)), z);
+      // End framing: the bar centred and filling HANDOFF_FILL of the height — the 3D bar starts from the same shot.
+      const s = Math.pow(Math.max(1, (HANDOFF_FILL * vh) / (BAR.h * b)), z);
       const cx = cx0 + (vw / 2 - cx0) * z, cy = cy0 + (vh / 2 - cy0) * z;
       el.style.transform = z > 0 ? `translate(${cx - cx0 * s}px,${cy - cy0 * s}px) scale(${s})` : "";
       el.style.opacity = String(1 - fade);
