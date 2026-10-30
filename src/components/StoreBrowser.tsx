@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { PagedGrid } from "./PagedGrid";
 import { index, score } from "@/lib/search";
 import { PRODUCT_MENU, SITE, type NavLink } from "@/lib/site";
@@ -17,12 +18,6 @@ export function StoreBrowser({ products, chips, search = true, label }: { produc
   const [sort, setSort] = useState<Sort>("default");
   const [inStock, setInStock] = useState(false);
 
-  // ?q= and ?cat= (links from the header/hero search) are read after hydration, so the static HTML is the full list.
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (search) setQ(params.get("q") ?? "");
-    if (chips) setCat(params.get("cat") ?? "");
-  }, [search, chips]);
 
   const inChip = (p: Product, href: string) => p.categories.some((c) => c.path.startsWith(href));
   const indexed = useMemo(
@@ -59,6 +54,11 @@ export function StoreBrowser({ products, chips, search = true, label }: { produc
 
   return (
     <>
+      {/* ?q= and ?cat= (from the header/hero search) apply after hydration and on every later search, so the
+          static HTML is the full list. */}
+      <Suspense fallback={null}>
+        <QuerySync onChange={(params) => { if (search) setQ(params.get("q") ?? ""); if (chips) setCat(params.get("cat") ?? ""); }} />
+      </Suspense>
       {search && (
         <form role="search" className="store-search" onSubmit={(e) => { e.preventDefault(); syncUrl({}); }}>
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
@@ -116,4 +116,12 @@ export function StoreBrowser({ products, chips, search = true, label }: { produc
       )}
     </>
   );
+}
+
+function QuerySync({ onChange }: { onChange: (params: URLSearchParams) => void }) {
+  const params = useSearchParams();
+  const key = params.toString();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => onChange(new URLSearchParams(key)), [key]);
+  return null;
 }

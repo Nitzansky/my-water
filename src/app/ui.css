@@ -69,6 +69,9 @@
 .search-results [aria-selected="true"] a, .search-results a:hover { background: var(--tint); color: var(--brand); }
 .search-results img, .search-results__ph { width: 40px; height: 40px; object-fit: contain; flex: none; border-radius: 8px; background: var(--tint); }
 .search-results__all { color: var(--brand) !important; justify-content: center; }
+.search-results__none { padding: 10px 8px 4px; font: 400 0.9375rem/1.4 var(--font-ui); color: var(--muted); text-align: center; }
+.hero-search { position: relative; }
+.hero-search .search-results { inset-inline: 0; width: auto; top: calc(100% + 10px); }
 
 @media (max-width: 1320px) {
   .header-phone__full { display: none; }
@@ -277,7 +280,8 @@
 .cart-summary__total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--line); font: 600 1.125rem/1.3 var(--font-ui); }
 
 /* ---- home -------------------------------------------------------------------------------- */
-.hero { position: relative; min-height: calc(100svh - var(--header-h)); display: flex; align-items: center; overflow: hidden; margin-top: calc(-1 * var(--header-h)); padding-top: var(--header-h); }
+/* above the 3D story, which is pulled up behind the hero and would otherwise take its clicks */
+.hero { position: relative; z-index: 2; min-height: calc(100svh - var(--header-h)); display: flex; align-items: center; margin-top: calc(-1 * var(--header-h)); padding-top: var(--header-h); }
 .hero-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100lvh; z-index: -1; overflow: hidden; pointer-events: none; }
 .hero-backdrop__layer { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform, opacity; }
 .hero__bg { object-fit: cover; object-position: 70% 50%; }

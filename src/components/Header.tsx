@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useId, useRef, useState } from "react";
 import { CartCount } from "./cart";
-import { index, score } from "@/lib/search";
+import { SearchBox, type SearchItem } from "./SearchBox";
 import { PRODUCT_MENU, SITE, TAMI_FILTERS_MENU, TAMI_SERVICE_MENU, TOP_LINKS, type NavLink } from "@/lib/site";
 
-export type SearchItem = { name: string; path: string; image: string | null };
+export type { SearchItem };
 
 type MenuKey = "prod" | "tami" | null;
 
@@ -85,7 +85,7 @@ export function Header({ searchIndex }: { searchIndex: SearchItem[] }) {
         >
           {search ? <span aria-hidden="true">✕</span> : <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>}
         </button>
-        <HeaderSearch index={searchIndex} autoFocus={search} />
+        <SearchBox index={searchIndex} autoFocus={search} id="header-search" />
         <Link href="/cart/" className="pill">
           סל<span className="sr-only"> קניות</span><CartCount />
         </Link>
@@ -142,67 +142,5 @@ function Dropdown({ label, href, k, open, setOpen, enter, leave, current, wide, 
       </button>
       <div id={id} className={`menu-panel ${wide ? "menu-panel--wide" : ""}`} hidden={!isOpen}>{children}</div>
     </div>
-  );
-}
-
-function HeaderSearch({ index: items, autoFocus }: { index: SearchItem[]; autoFocus: boolean }) {
-  const router = useRouter();
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(-1);
-  const listId = useId();
-  const wrap = useRef<HTMLFormElement>(null);
-  const indexed = useMemo(() => items.map((p) => ({ p, words: index(p.name) })), [items]);
-
-  const term = q.trim();
-  const results = term.length < 2 ? [] : indexed.map((x) => ({ p: x.p, s: score(term, x.words) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 6).map((x) => x.p);
-
-  useEffect(() => {
-    if (autoFocus) wrap.current?.querySelector("input")?.focus();
-  }, [autoFocus]);
-
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
-
-  return (
-    <form
-      ref={wrap} id="header-search" role="search" className="header-search"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setOpen(false);
-        router.push(active >= 0 && results[active] ? results[active].path : `/shop/?q=${encodeURIComponent(q.trim())}`);
-      }}
-    >
-      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
-      <input
-        type="search" value={q} placeholder="חיפוש מוצר…" aria-label="חיפוש מוצרים" autoComplete="off"
-        role="combobox" aria-expanded={open && results.length > 0} aria-controls={listId} aria-autocomplete="list"
-        aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
-        onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(-1); }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(results.length - 1, a + 1)); }
-          if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(-1, a - 1)); }
-        }}
-      />
-      {open && results.length > 0 && (
-        <ul id={listId} role="listbox" className="search-results">
-          {results.map((r, i) => (
-            <li key={r.path} id={`${listId}-${i}`} role="option" aria-selected={i === active}>
-              <Link href={r.path} onClick={() => setOpen(false)}>
-                {r.image ? <Image src={r.image} alt="" width={40} height={40} /> : <span className="search-results__ph" />}
-                <span>{r.name}</span>
-              </Link>
-            </li>
-          ))}
-          <li role="option" aria-selected={false}>
-            <Link href={`/shop/?q=${encodeURIComponent(q.trim())}`} className="search-results__all" onClick={() => setOpen(false)}>כל התוצאות עבור &quot;{q.trim()}&quot; ←</Link>
-          </li>
-        </ul>
-      )}
-    </form>
   );
 }

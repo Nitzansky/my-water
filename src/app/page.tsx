@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Reviews } from "@/components/Reviews";
+import { SearchBox } from "@/components/SearchBox";
 import { TrustStrip } from "@/components/Trust";
 import { WaterStory } from "@/components/story/WaterStory";
 import { HeroBackdrop } from "@/components/hero/HeroBackdrop";
 import { JsonLd, ProductGrid } from "@/components/ui";
-import { BASE_PATH, SITE } from "@/lib/site";
+import { SITE } from "@/lib/site";
 import { getBestsellers, getEntryByPath, getProducts, type Product } from "@/lib/wp";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -78,11 +79,7 @@ export default async function Home() {
               ))}
             </h1>
             <p className="lead">מים צלולים מהבר שלכם — עם המסנן הנכון, וטכנאי שמגיע עד הבית.</p>
-            <form action={`${BASE_PATH}/shop/`} role="search" className="hero-search glass">
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
-              <input type="search" name="q" placeholder="חפשו מסנן, דגם או חלק…" aria-label="חיפוש מוצרים" />
-              <button type="submit" className="btn btn-primary">חיפוש</button>
-            </form>
+            <SearchBox hero index={products.map((p) => ({ name: p.name, path: p.path, image: p.images[0]?.src ?? null }))} />
             {/* Two clear next steps: buy (the shop) or get a technician. */}
             <div className="hero-paths">
               <Link href="/shop/" className="btn btn-primary">לחנות המוצרים <span aria-hidden="true">←</span></Link>
