@@ -93,17 +93,21 @@ export default async function Home() {
 
       <div className="story-cover">
       <div className="container page" style={{ gap: 72 }}>
-        <section aria-labelledby="systems" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <h2 id="systems" className="h2">מידע מקיף על כל המערכות לטיהור ולהשבחת מי שתיה</h2>
+        <section aria-labelledby="systems" className="systems-panel">
+          <div className="systems-panel__head">
+            <span className="kicker">המוצרים שלנו</span>
+            <h2 id="systems" className="h2">מידע מקיף על כל המערכות לטיהור ולהשבחת מי שתיה</h2>
+            <Link href="/shop/" className="systems-panel__all">לכל המוצרים <span aria-hidden="true">←</span></Link>
+          </div>
           <ul className="systems">
             {SYSTEMS.map((s) => {
               const img = imageFor(products, s.from ?? s.href);
               return (
                 <li key={s.href}>
-                  <Link href={s.href} className="glass system-card">
-                    <span className="system-card__img glow">{img && <Image src={img} alt="" fill sizes="120px" />}</span>
-                    <span className="system-card__title">{s.title}</span>
-                    <span className="system-card__more" aria-hidden="true">קראו עוד ←</span>
+                  <Link href={s.href} className="system-row">
+                    <span className="system-row__img">{img && <Image src={img} alt="" fill sizes="56px" />}</span>
+                    <span className="system-row__title">{s.title}</span>
+                    <span className="system-row__arrow" aria-hidden="true">←</span>
                   </Link>
                 </li>
               );

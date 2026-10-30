@@ -259,13 +259,38 @@
 .dots { display: flex; gap: 6px; }
 .dots span { width: 8px; height: 8px; border-radius: 999px; background: rgba(15, 42, 58, 0.18); transition: width 0.2s; }
 .dots span[data-on="true"] { width: 22px; background: var(--brand); }
-.systems { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
-.system-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; height: 100%; box-sizing: border-box; padding: 22px 16px; color: var(--ink); transition: box-shadow 0.2s, transform 0.2s; }
-.system-card:hover { box-shadow: 0 20px 50px rgba(15, 42, 58, 0.12); transform: translateY(-2px); color: var(--ink); }
-.system-card__img { position: relative; width: 120px; height: 120px; border-radius: 999px; overflow: hidden; }
-.system-card__img img { object-fit: contain; padding: 14%; }
-.system-card__title { font: 600 1.0625rem/1.35 var(--font-ui); flex: 1; }
-.system-card__more { font: 600 0.875rem/1 var(--font-ui); color: var(--brand); }
+/* Systems: one frosted panel over the hero photo — heading on one side, the systems as a two-column list. */
+.systems-panel {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 40px; align-items: start;
+  padding: clamp(24px, 3.4vw, 48px); border-radius: 30px 30px 30px 6px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.74));
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6); backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: 0 30px 80px rgba(15, 42, 58, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.systems-panel__head { display: flex; flex-direction: column; gap: 14px; position: sticky; top: calc(var(--header-h) + 24px); }
+.systems-panel__all { align-self: flex-start; margin-top: 8px; font: 600 0.9375rem/1 var(--font-ui); color: var(--brand); }
+.systems-panel__all:hover { text-decoration: underline; text-underline-offset: 4px; }
+.systems { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; margin: 0; padding: 0; list-style: none; }
+.systems li { border-bottom: 1px solid rgba(15, 42, 58, 0.09); }
+.systems li:nth-last-child(-n + 2):nth-child(odd), .systems li:last-child { border-bottom: 0; }
+.system-row { display: flex; align-items: center; gap: 14px; min-height: 76px; padding: 10px 10px; border-radius: 16px; color: var(--ink); transition: background-color 0.2s; }
+.system-row:hover { background: rgba(255, 255, 255, 0.7); color: var(--ink); }
+.system-row__img { position: relative; flex: none; width: 56px; height: 56px; border-radius: 999px; overflow: hidden; background: radial-gradient(circle at 50% 35%, #fff, #e6f0f7); }
+.system-row__img img { object-fit: contain; padding: 12%; }
+.system-row__title { flex: 1; font: 600 1.0625rem/1.35 var(--font-ui); }
+.system-row__arrow { flex: none; font: 400 1.25rem/1 var(--font-ui); color: var(--brand); transition: transform 0.2s; }
+.system-row:hover .system-row__arrow { transform: translateX(-4px); }
+@media (max-width: 900px) {
+  .systems-panel { grid-template-columns: 1fr; gap: 20px; }
+  .systems-panel__head { position: static; }
+}
+@media (max-width: 560px) {
+  .systems { grid-template-columns: 1fr; }
+  .systems li:nth-last-child(2) { border-bottom: 1px solid rgba(15, 42, 58, 0.09); }
+  .system-row { min-height: 64px; padding-inline: 4px; }
+  .system-row__img { width: 48px; height: 48px; }
+}
 @media (max-width: 760px) {
   .hero { min-height: auto; }
   .hero__bg { object-position: 80% 30%; opacity: var(--hero-bg-o, 0.55); }
@@ -458,5 +483,3 @@ html.a11y-text-xl .btn { white-space: normal; height: auto; min-height: 44px; te
 @media (max-width: 600px) { .story-nav__label { display: none; } .story-nav { right: calc(16px + 60px); } }
 .story__note { display: none; margin: 0 auto; max-width: 560px; padding: 0 16px; text-align: center; font: 400 0.9375rem/1.5 var(--font-ui); color: var(--muted); }
 .story[data-mode="off"] .story__note { display: block; }
-/* The systems heading sits on the hero photo: a frosted backing keeps it readable. */
-.story-cover .h2 { align-self: flex-start; padding: 10px 20px; border-radius: 20px; background: rgba(255, 255, 255, 0.78); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
