@@ -124,14 +124,15 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
 
   const camera = new THREE.PerspectiveCamera(28, 1, 0.002, 20);
   const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  let fitScale = 1;
+  let fitScale = 1, lift = 0; // lift: on portrait phones the bar sits this fraction of the view above centre
   const resize = () => {
     const w = el.clientWidth || 1, h = el.clientHeight || 1;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    // Portrait phones: step back only part of the way, so the bar stays large (and sharp) on screen.
-    fitScale = Math.max(1, Math.sqrt(0.75 / camera.aspect));
+    // Portrait phones: step back so the bar fits comfortably above the text panels.
+    fitScale = Math.max(1, 0.95 / camera.aspect);
+    lift = camera.aspect < 0.8 ? 0.2 : 0;
     dirty = true;
   };
 
@@ -145,7 +146,7 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
   const K = KEYS.map(([kp, k]) => ({ p: kp, ...k }));
 
   const step = (dt: number, t: number) => {
-    let dist: number, side: number;
+    let dist: number, side: number, up: number;
     if (q < 1) {
       const o = K[0], d0 = Math.min(SS.y / 2 / tan, SS.x / 2 / (tan * camera.aspect));
       const late = ease(range(q, 0.5, 1));
@@ -153,6 +154,7 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
       D.lerpVectors(Z, o.dir, late).normalize();
       dist = d0 * Math.pow((o.dist * fitScale) / d0, ease(range(q, 0, 0.9)));
       side = o.side * late * (camera.aspect > 1.1 ? 0.5 : 0);
+      up = lift * late;
     } else {
       let i = 0;
       while (i < K.length - 2 && p > K[i + 1].p) i++;
@@ -161,8 +163,10 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
       D.lerpVectors(a.dir, b.dir, u).normalize();
       dist = a.dist * fitScale * Math.pow(b.dist / a.dist, u);
       side = (a.side + (b.side - a.side) * u) * (camera.aspect > 1.1 ? 0.5 : 0);
+      up = lift;
     }
     R.set(D.z, 0, -D.x).normalize().multiplyScalar(dist * tan * camera.aspect * side);
+    R.y -= 2 * dist * tan * up;
     Tg.copy(F).add(R);
     P.copy(F).addScaledVector(D, dist).add(R);
     if (!cur) cur = { pos: P.clone(), tgt: Tg.clone() };
