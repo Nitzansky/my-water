@@ -4,7 +4,7 @@
 import * as THREE from "three";
 import { buildDispenser, DIM } from "../glass/model.js";
 import { WaterFX } from "../glass/water.js";
-import { HANDOFF_FILL } from "./timing";
+import { PHOTO, PHOTO_CAMERA, photoFrame } from "../hero/hero-photo";
 
 export type StoryScene = {
   setProgress: (p: number) => void;
@@ -27,8 +27,6 @@ const KEYS: [number, Shot][] = [
   [1, shot(V(0, 0.205, 0.02), V(-0.55, 0.12, 1), 1.3)],
 ];
 const fillAt = (p: number) => range(p, 0.08, 0.6) * 0.95;
-// The hero photo's viewing angle: the intro's first shot uses it, then eases into KEYS[0].
-const PHOTO_DIR = V(0.45, 0.17, 1).normalize();
 
 function studioEnvironment(renderer: THREE.WebGLRenderer) {
   const s = new THREE.Scene();
@@ -104,18 +102,6 @@ export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {})
   scene.environment = studioEnvironment(renderer);
   const model = buildDispenser({ maxAnisotropy: renderer.capabilities.getMaxAnisotropy() });
   scene.add(model.root);
-  // Outline points of the bar's body (no glass): the intro's first shot is fitted so the bar's outline on
-  // screen matches the hero photo's last shot (centred, HANDOFF_FILL of the view height).
-  model.root.updateMatrixWorld(true);
-  const outline: THREE.Vector3[] = [];
-  model.dispenser.traverse((o) => {
-    const m = o as THREE.Mesh;
-    if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh) return;
-    const pos = m.geometry.attributes.position, stride = Math.max(1, Math.floor(pos.count / 400));
-    for (let i = 0; i < pos.count; i += stride) outline.push(V(0, 0, 0).fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld));
-  });
-  const bar = new THREE.Box3().setFromObject(model.dispenser);
-  const BC = bar.getCenter(new THREE.Vector3()), BH = bar.max.y - bar.min.y;
   const fx = new WaterFX({ materials: model.materials, glassProfile: model.glassProfile, tipY: DIM.tipY - DIM.grilleTop });
   fx.group.position.copy(model.glass.position);
   model.root.add(fx.group);
@@ -140,37 +126,24 @@ export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {})
   const camera = new THREE.PerspectiveCamera(28, 1, 0.002, 20);
   const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   let fitScale = 1, lift = 0; // lift: on portrait phones the bar sits this fraction of the view above centre
-  const introF = V(0, 0, 0);
-  let introD = 1;
-  const fitIntro = () => {
-    const dir = PHOTO_DIR, v = V(0, 0, 0), right = V(0, 0, 0), up = V(0, 0, 0);
-    introF.copy(BC);
-    let d = BH / HANDOFF_FILL / (2 * tan);
-    for (let i = 0; i < 6; i++) {
-      camera.position.copy(introF).addScaledVector(dir, d);
-      camera.lookAt(introF);
-      camera.updateMatrixWorld();
-      let x0 = 1, x1 = -1, y0 = 1, y1 = -1;
-      for (const p of outline) {
-        v.copy(p).project(camera);
-        x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
-      }
-      right.setFromMatrixColumn(camera.matrixWorld, 0);
-      up.setFromMatrixColumn(camera.matrixWorld, 1);
-      introF.addScaledVector(right, ((x0 + x1) / 2) * d * tan * camera.aspect).addScaledVector(up, ((y0 + y1) / 2) * d * tan);
-      d *= (y1 - y0) / 2 / HANDOFF_FILL;
-    }
-    introD = d;
-  };
+  // The hero photo's camera: the intro's first frame is rendered through it, cropped exactly like the
+  // zoomed photo (a view offset), then eases into the first story shot.
+  const photoCam = new THREE.PerspectiveCamera(PHOTO_CAMERA.fov, PHOTO.w / PHOTO.h, camera.near, camera.far);
+  photoCam.position.set(...PHOTO_CAMERA.position);
+  photoCam.lookAt(...PHOTO_CAMERA.target);
+  const ref = new THREE.PerspectiveCamera();
+  const regProj = new THREE.Matrix4();
   const resize = () => {
     const w = el.clientWidth || 1, h = el.clientHeight || 1;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    regProj.copy(camera.projectionMatrix);
+    const { crop } = photoFrame(w, h, 1);
+    photoCam.setViewOffset(PHOTO.w, PHOTO.h, crop.x, crop.y, crop.w, crop.h);
     // Portrait phones: step back so the bar fits comfortably above the text panels.
     fitScale = Math.max(1, 0.95 / camera.aspect);
     lift = camera.aspect < 0.8 ? 0.2 : 0;
-    fitIntro();
     dirty = true;
   };
 
@@ -180,37 +153,55 @@ export async function mountStoryScene(el: HTMLElement, { onSlow }: Options = {})
   const F = V(0, 0, 0), D = V(0, 0, 0), R = V(0, 0, 0), P = V(0, 0, 0), Tg = V(0, 0, 0);
   const K = KEYS.map(([kp, k]) => ({ p: kp, ...k }));
 
-  const step = (dt: number, t: number) => {
-    let dist: number, side: number, up: number;
-    if (q < 1) {
-      const o = K[0];
-      const late = ease(range(q, 0.3, 1));
-      F.lerpVectors(introF, o.focus, late);
-      D.lerpVectors(PHOTO_DIR, o.dir, late).normalize();
-      dist = introD + (o.dist * fitScale - introD) * ease(q);
-      side = o.side * late * (camera.aspect > 1.1 ? 0.5 : 0);
-      up = lift * late;
-    } else {
-      let i = 0;
-      while (i < K.length - 2 && p > K[i + 1].p) i++;
-      const a = K[i], b = K[i + 1], u = ease(range(p, a.p, b.p));
-      F.lerpVectors(a.focus, b.focus, u);
-      D.lerpVectors(a.dir, b.dir, u).normalize();
-      dist = a.dist * fitScale * Math.pow(b.dist / a.dist, u);
-      side = (a.side + (b.side - a.side) * u) * (camera.aspect > 1.1 ? 0.5 : 0);
-      up = lift;
-    }
+  // Camera for a point along the story (p 0→1): sets P (position) and Tg (target).
+  const shotAt = (pp: number) => {
+    let i = 0;
+    while (i < K.length - 2 && pp > K[i + 1].p) i++;
+    const a = K[i], b = K[i + 1], u = ease(range(pp, a.p, b.p));
+    F.lerpVectors(a.focus, b.focus, u);
+    D.lerpVectors(a.dir, b.dir, u).normalize();
+    const dist = a.dist * fitScale * Math.pow(b.dist / a.dist, u);
+    const side = (a.side + (b.side - a.side) * u) * (camera.aspect > 1.1 ? 0.5 : 0);
     R.set(D.z, 0, -D.x).normalize().multiplyScalar(dist * tan * camera.aspect * side);
-    R.y -= 2 * dist * tan * up;
+    R.y -= 2 * dist * tan * lift;
     Tg.copy(F).add(R);
     P.copy(F).addScaledVector(D, dist).add(R);
-    if (!cur) cur = { pos: P.clone(), tgt: Tg.clone() };
-    const k = q < 1 ? Math.min(1, dt * 9) : Math.min(1, dt * 5);
-    const moving = cur.pos.distanceToSquared(P) > 1e-10 || cur.tgt.distanceToSquared(Tg) > 1e-10;
-    cur.pos.lerp(P, k);
-    cur.tgt.lerp(Tg, k);
-    camera.position.copy(cur.pos);
-    camera.lookAt(cur.tgt);
+  };
+  // Blend of the photo's projection (u = 0) and the regular one (u = 1).
+  const project = (u: number) => {
+    const a = photoCam.projectionMatrix.elements, b = regProj.elements, m = camera.projectionMatrix.elements;
+    for (let i = 0; i < 16; i++) m[i] = a[i] + (b[i] - a[i]) * u;
+    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+  };
+
+  let qs = 0; // smoothed intro progress
+  const step = (dt: number, t: number) => {
+    let moving: boolean;
+    if (q < 1 || qs < 1) {
+      // Intro: from the photo's camera to the first story shot.
+      qs = dt > 0 ? qs + (q - qs) * Math.min(1, dt * 9) : q;
+      if (Math.abs(q - qs) < 1e-4) qs = q;
+      moving = qs !== q;
+      shotAt(0);
+      const u = ease(qs);
+      ref.position.copy(P);
+      ref.lookAt(Tg);
+      camera.position.lerpVectors(photoCam.position, P, u);
+      camera.quaternion.slerpQuaternions(photoCam.quaternion, ref.quaternion, u);
+      project(u);
+      if (!cur) cur = { pos: P.clone(), tgt: Tg.clone() };
+      else { cur.pos.copy(P); cur.tgt.copy(Tg); }
+    } else {
+      shotAt(p);
+      if (!cur) cur = { pos: P.clone(), tgt: Tg.clone() };
+      const k = Math.min(1, dt * 5);
+      moving = cur.pos.distanceToSquared(P) > 1e-10 || cur.tgt.distanceToSquared(Tg) > 1e-10;
+      cur.pos.lerp(P, k);
+      cur.tgt.lerp(Tg, k);
+      camera.position.copy(cur.pos);
+      camera.lookAt(cur.tgt);
+      project(1);
+    }
 
     const tv = fillAt(p) * fx.Vmax;
     fx.full = false;
