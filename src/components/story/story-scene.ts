@@ -5,13 +5,12 @@ import * as THREE from "three";
 import { buildDispenser, DIM } from "../glass/model.js";
 import { WaterFX } from "../glass/water.js";
 
-export type ScreenRect = { x: number; y: number; w: number; h: number; vw: number; vh: number };
 export type StoryScene = {
   setProgress: (p: number) => void;
   setIntro: (q: number) => void;
   dispose: () => void;
 };
-type Options = { onFrame?: (f: { q: number; rect: ScreenRect }) => void; onSlow?: () => void };
+type Options = { onFrame?: (f: { q: number }) => void; onSlow?: () => void };
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const range = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
@@ -85,9 +84,9 @@ function contactShadow() {
 
 export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Options = {}): Promise<StoryScene> {
   const phone = Math.min(innerWidth, innerHeight) < 700;
-  const renderer = new THREE.WebGLRenderer({ antialias: !phone, alpha: true, powerPreference: "high-performance" });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
   // Resolution steps for the adaptive quality check below (the first is the normal one).
-  const ratios = [Math.min(devicePixelRatio, phone ? 1.5 : 2), 1.25, 1, 0.75].filter((r, i, a) => i === 0 || r < a[0]);
+  const ratios = [Math.min(devicePixelRatio, 2), 1.5, 1.25, 1, 0.75].filter((r, i, a) => i === 0 || r < a[0]);
   let level = 0;
   renderer.setPixelRatio(ratios[0]);
   renderer.setClearColor(0x000000, 0);
@@ -131,22 +130,14 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    fitScale = Math.max(1, 0.75 / camera.aspect); // portrait phones: step back so the whole bar fits
+    // Portrait phones: step back only part of the way, so the bar stays large (and sharp) on screen.
+    fitScale = Math.max(1, Math.sqrt(0.75 / camera.aspect));
     dirty = true;
   };
 
-  // The bar's touchscreen: the intro starts with it filling the view (the hero photo is mapped onto it).
+  // The bar's touchscreen: the intro starts with it filling the view.
   const box = new THREE.Box3().setFromObject(model.screen.mesh);
   const SC = box.getCenter(new THREE.Vector3()), SS = box.getSize(new THREE.Vector3()), Z = V(0, 0, 1);
-  const c1 = V(0, 0, 0), c2 = V(0, 0, 0);
-  const project = (): ScreenRect => {
-    camera.updateMatrixWorld();
-    c1.set(box.min.x, box.max.y, box.max.z).project(camera);
-    c2.set(box.max.x, box.min.y, box.max.z).project(camera);
-    const w = el.clientWidth, h = el.clientHeight;
-    const x0 = ((c1.x + 1) / 2) * w, y0 = ((1 - c1.y) / 2) * h, x1 = ((c2.x + 1) / 2) * w, y1 = ((1 - c2.y) / 2) * h;
-    return { x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.abs(x1 - x0), h: Math.abs(y1 - y0), vw: w, vh: h };
-  };
 
   let p = 0, q = 0, pourUntil = 0, dirty = true;
   let cur: { pos: THREE.Vector3; tgt: THREE.Vector3 } | null = null;
@@ -181,7 +172,7 @@ export async function mountStoryScene(el: HTMLElement, { onFrame, onSlow }: Opti
     cur.tgt.lerp(Tg, k);
     camera.position.copy(cur.pos);
     camera.lookAt(cur.tgt);
-    onFrame?.({ q, rect: project() });
+    onFrame?.({ q });
 
     const tv = fillAt(p) * fx.Vmax;
     fx.full = false;

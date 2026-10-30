@@ -94,13 +94,9 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
     const el = root.current!, st = stage.current!, layer = zoom.current!, target = discover.current!;
     let scene: StoryScene | null = null, disposed = false, raf = 0;
 
-    const onFrame = ({ q, rect }: { q: number; rect: { x: number; y: number; w: number; h: number; vw: number; vh: number } }) => {
-      // The hero photo sits on the bar's screen and shrinks with it as the camera pulls back.
-      const sc = Math.min(1, Math.min(rect.w / rect.vw, rect.h / rect.vh));
-      const tx = rect.x + rect.w / 2 - (rect.vw * sc) / 2, ty = rect.y + rect.h / 2 - (rect.vh * sc) / 2;
-      layer.style.transform = q <= 0.001 ? "none" : `translate(${tx}px,${ty}px) scale(${sc})`;
-      layer.style.borderRadius = q <= 0.001 ? "0" : `${Math.min(400, 24 / Math.max(sc, 0.02))}px`;
-      layer.style.opacity = String(1 - clamp((q - 0.5) / 0.35));
+    const onFrame = ({ q }: { q: number }) => {
+      // A page-coloured veil over the close-up, dissolving as the systems section slides away.
+      layer.style.opacity = String(1 - clamp(q / 0.45));
     };
 
     const reveals = [...el.querySelectorAll<HTMLElement>("[data-reveal]")];
@@ -170,7 +166,7 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
       lastY = y; lastT = now; inputT = now;
       const start = top(el), end = top(target);
       if (mv < -30 || y >= end - 2 || y < start) engaged = false;
-      else if (y > start + 8 && mv > 0) engaged = true;
+      else if (y > start + innerHeight * 0.8 && mv > 0) engaged = true;
     };
     const spring = (now: number) => {
       raf = requestAnimationFrame(spring);
@@ -204,10 +200,10 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
     const el = root.current!;
     const update = () => {
       const R = el.getBoundingClientRect(), vh = innerHeight;
-      const inStory = R.top < vh * 0.5 && R.bottom > vh * 0.5;
+      const inStory = R.top < -vh * 0.4 && R.bottom > vh * 0.5; // the story starts a screen early (under the systems section)
       const snaps = [...document.querySelectorAll<HTMLElement>("[data-snap]")];
       const next = snaps.find((s) => top(s) > scrollY + 12);
-      setNav({ show: inStory && !!next, up: R.top < -8, label: next?.dataset.snap ?? "" });
+      setNav({ show: inStory && !!next, up: R.top < -vh - 8, label: next?.dataset.snap ?? "" });
     };
     update();
     addEventListener("scroll", update, { passive: true });
@@ -225,9 +221,8 @@ export function WaterStory({ products }: { products: (StoryProduct | null)[] }) 
     <div ref={root} className="story" data-mode={mode}>
       <div className="story__sticky" aria-hidden="true">
         <div ref={stage} className="story__stage" />
-        <div ref={zoom} className="story__zoom">
-          <Image src="/hero-tami.webp" alt="" fill sizes="100vw" />
-        </div>
+        {/* Page-coloured plate on the bar's screen: the zoom-out starts from "nothing changed". */}
+        <div ref={zoom} className="story__zoom" />
       </div>
 
       <div className="story__intro" />

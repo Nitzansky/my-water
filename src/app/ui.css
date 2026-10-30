@@ -399,11 +399,15 @@ html.a11y-text-xl .btn { white-space: normal; height: auto; min-height: 44px; te
 
 /* ---- home: scroll-driven 3D story (design "Scroll B5") ------------------------------------- */
 .story { position: relative; }
+/* The stage sticks one screen early, under the systems section, which slides up like a curtain
+   while the camera is already pulling back from the bar's screen. */
+.story:not([data-mode="off"]) { margin-top: -100lvh; }
+.story-cover { position: relative; z-index: 1; background: #dfeaf2; padding-bottom: 72px; }
+.story-cover > .container { padding-bottom: 0; }
 .story__sticky { position: sticky; top: 0; height: 100lvh; margin-bottom: -100lvh; z-index: 0; overflow: hidden; pointer-events: none; }
 .story__stage { position: absolute; inset: 0; }
-.story__zoom { position: absolute; inset: 0; overflow: hidden; transform-origin: 0 0; will-change: transform, opacity; }
-.story__zoom img { object-fit: cover; object-position: 62% 50%; }
-.story__intro { height: 100svh; }
+.story__zoom { position: absolute; inset: 0; background: #dfeaf2; will-change: opacity; }
+.story__intro { height: 160lvh; }
 .story__sec {
   position: relative; z-index: 1; min-height: 100svh; box-sizing: border-box; display: flex; flex-direction: column;
   justify-content: center; align-items: flex-start; padding: 96px clamp(20px, 7vw, 112px);

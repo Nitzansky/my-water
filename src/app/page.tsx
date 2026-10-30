@@ -90,6 +90,7 @@ export default async function Home() {
         </div>
       </section>
 
+      <div className="story-cover">
       <div className="container page" style={{ gap: 72 }}>
         <section aria-labelledby="systems" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <h2 id="systems" className="h2">מידע מקיף על כל המערכות לטיהור ולהשבחת מי שתיה</h2>
@@ -108,6 +109,7 @@ export default async function Home() {
             })}
           </ul>
         </section>
+      </div>
       </div>
 
       <WaterStory
