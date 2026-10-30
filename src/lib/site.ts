@@ -16,6 +16,8 @@ export const SITE = {
   city: "כפר סבא",
   geo: { lat: 32.1711322, lng: 34.9070395 },
   googleBusiness: "https://www.google.com/maps/place/My+Water/@32.1711322,34.9070395,17z",
+  // The live site's Google Reviews widget (Elfsight) — the business's real Google reviews.
+  reviewsWidget: "elfsight-app-e2b28c02-cf7b-4354-8db3-8f0d7900b23a",
   legalNote: "myWater היא חברת שירות פרטית ואינה קשורה לחברת תמי 4.",
 };
 
@@ -63,3 +65,6 @@ export const FOOTER_LINKS: NavLink[] = [
   { label: "תקנון האתר", href: "/תקנון-האתר/" },
   { label: "מפת האתר", href: "/site-map/" },
 ];
+
+// Short trust points, from the site's own wording (technician band, shop intro).
+export const TRUST = ["30 שנות ניסיון", "100% אחריות על העבודה", "טכנאי עד הבית", "משלוח עד הבית"];

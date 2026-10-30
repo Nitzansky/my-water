@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Breadcrumbs, CtaBand, JsonLd, ProductGrid } from "@/components/ui";
+import { StoreBrowser } from "@/components/StoreBrowser";
+import { Breadcrumbs, CtaBand, JsonLd } from "@/components/ui";
 import { cleanHtml, plainText } from "@/lib/content";
 import { SITE } from "@/lib/site";
 import { decode, getCategories, getCategoryByPath, getProductsInCategory, type Category } from "@/lib/wp";
@@ -30,6 +31,8 @@ export default async function CategoryPage({ params }: Props) {
   const children = all.filter((c) => c.parent === cat.id && c.count > 0);
   const siblings = all.filter((c) => c.parent === cat.parent && c.id !== cat.id && c.count > 0);
   const description = cleanHtml(cat.description);
+  // descriptions are not shown in the grid; keep the client payload small
+  const light = products.map((p) => ({ ...p, description: "", shortDescription: "" }));
 
   return (
     <div className="container page">
@@ -42,12 +45,8 @@ export default async function CategoryPage({ params }: Props) {
 
       {children.length > 0 && <CategoryLinks label="סינון לפי דגם" cats={children} />}
 
-      <div className="store-head">
-        <h2 className="h2">{children.length ? `כל המוצרים ב${cat.name}` : "המוצרים"}</h2>
-        <span style={{ font: "400 0.9375rem/1.5 var(--font-ui)", color: "var(--muted)" }}>{products.length === 1 ? "מוצר אחד" : `${products.length} מוצרים`}</span>
-      </div>
       {products.length ? (
-        <ProductGrid products={products} label={cat.name} />
+        <StoreBrowser products={light} search={false} label={children.length ? `כל המוצרים ב${cat.name}` : "המוצרים"} />
       ) : (
         <p className="lead">אין כרגע מוצרים בקטגוריה. <a href={SITE.phoneHref} style={{ color: "var(--brand)" }}>התקשרו ונעזור</a></p>
       )}
@@ -79,8 +78,11 @@ export default async function CategoryPage({ params }: Props) {
 
 function CategoryLinks({ label, cats }: { label: string; cats: Category[] }) {
   return (
-    <nav aria-label={label} className="chips">
-      {cats.map((c) => <Link key={c.id} href={c.path} className="chip">{c.name}<sup>{c.count}</sup></Link>)}
+    <nav aria-label={label} className="cat-chips">
+      <span className="cat-chips__label" aria-hidden="true">{label}:</span>
+      <div className="cat-chips__row">
+        {cats.map((c) => <Link key={c.id} href={c.path} className="pill">{c.name}<span className="pill__count">{c.count}</span></Link>)}
+      </div>
     </nav>
   );
 }

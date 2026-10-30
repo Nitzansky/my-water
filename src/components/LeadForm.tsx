@@ -1,19 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { SITE } from "@/lib/site";
 
 type Props = { title: string; submitLabel: string; source: string; withMessage?: boolean };
 type Status = "idle" | "sending" | "sent" | "fallback";
 
 // Lead form in the design style. Posts to /api/lead; when no lead destination is configured yet,
-// the details are handed to WhatsApp (prefilled) so no lead is lost.
+// the details are handed to WhatsApp (prefilled) so no lead is lost. A "הזמנת טכנאי לתקלה הזו" button
+// anywhere on the page ([data-fault], from the faults accordion) fills in the fault and brings the form up.
 export function LeadForm({ title, submitLabel, source, withMessage }: Props) {
   const id = useId();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [wa, setWa] = useState("");
+  const [fault, setFault] = useState("");
+  const box = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const btn = (e.target as Element).closest?.<HTMLElement>("[data-fault]");
+      if (!btn) return;
+      setFault(btn.dataset.fault ?? "");
+      setStatus("idle");
+      const el = box.current!;
+      el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      el.querySelector<HTMLInputElement>("input[name=name]")?.focus({ preventScroll: true });
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,7 +41,8 @@ export function LeadForm({ title, submitLabel, source, withMessage }: Props) {
     }
     setError("");
     setStatus("sending");
-    const text = [`פנייה מהאתר (${title})`, `שם: ${data.name}`, `טלפון: ${data.phone}`, data.email && `דוא"ל: ${data.email}`, data.message && `הודעה: ${data.message}`]
+    if (fault) data.fault = fault;
+    const text = [`פנייה מהאתר (${title})`, fault && `תקלה: ${fault}`, `שם: ${data.name}`, `טלפון: ${data.phone}`, data.email && `דוא"ל: ${data.email}`, data.message && `הודעה: ${data.message}`]
       .filter(Boolean).join("\n");
     try {
       const res = await fetch("/api/lead/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...data, source }) });
@@ -35,7 +53,7 @@ export function LeadForm({ title, submitLabel, source, withMessage }: Props) {
   }
 
   return (
-    <section className="glass panel lead-form" aria-labelledby={`${id}-t`}>
+    <section ref={box} className="glass panel lead-form" aria-labelledby={`${id}-t`}>
       <h2 id={`${id}-t`} className="h2">{title}</h2>
       {status === "sent" ? (
         <p className="lead" role="status">תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.</p>
@@ -47,6 +65,12 @@ export function LeadForm({ title, submitLabel, source, withMessage }: Props) {
         </div>
       ) : (
         <form onSubmit={onSubmit} className="lead-form__grid">
+          {fault && (
+            <p className="lead-form__fault lead-form__wide" role="status">
+              <span>התקלה: <strong>{fault}</strong></span>
+              <button type="button" onClick={() => setFault("")} aria-label={`הסרת התקלה ${fault}`}>✕</button>
+            </p>
+          )}
           <label className="lead-form__field">
             <span>שם</span>
             <input className="field" name="name" required autoComplete="name" />

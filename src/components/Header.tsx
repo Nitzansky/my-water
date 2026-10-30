@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { CartCount } from "./cart";
+import { index, score } from "@/lib/search";
 import { PRODUCT_MENU, SITE, TAMI_FILTERS_MENU, TAMI_SERVICE_MENU, TOP_LINKS, type NavLink } from "@/lib/site";
 
 export type SearchItem = { name: string; path: string; image: string | null };
@@ -15,11 +16,13 @@ export function Header({ searchIndex }: { searchIndex: SearchItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState<MenuKey>(null);
   const [mobile, setMobile] = useState(false);
+  const [search, setSearch] = useState(false);
   const closeT = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setOpen(null);
     setMobile(false);
+    setSearch(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -27,6 +30,7 @@ export function Header({ searchIndex }: { searchIndex: SearchItem[] }) {
       if (e.key === "Escape") {
         setOpen(null);
         setMobile(false);
+        setSearch(false);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -38,7 +42,7 @@ export function Header({ searchIndex }: { searchIndex: SearchItem[] }) {
   const leave = () => { clearTimeout(closeT.current); closeT.current = setTimeout(() => setOpen(null), 160); };
 
   return (
-    <header className="site-header">
+    <header className="site-header" data-search={search ? "open" : undefined}>
       <div className="site-header__glass" aria-hidden="true" />
       <Link href="/" aria-label="myWater — דף הבית" className="site-header__logo">
         <Image src="/mywater-logo.png" alt="myWater — טיפה יותר" width={136} height={44} priority />
@@ -70,12 +74,18 @@ export function Header({ searchIndex }: { searchIndex: SearchItem[] }) {
         ))}
       </nav>
 
-      <button type="button" className="pill nav-mobile-toggle" aria-label="תפריט" aria-expanded={mobile} aria-controls="mobile-menu" onClick={() => setMobile((m) => !m)}>
+      <button type="button" className="pill nav-mobile-toggle" aria-label="תפריט" aria-expanded={mobile} aria-controls="mobile-menu" onClick={() => { setMobile((m) => !m); setSearch(false); }}>
         <span aria-hidden="true">{mobile ? "✕" : "☰"}</span><span className="nav-mobile-toggle__label">תפריט</span>
       </button>
 
       <div className="site-header__actions">
-        <HeaderSearch index={searchIndex} />
+        <button
+          type="button" className="pill header-search-toggle" aria-label={search ? "סגירת החיפוש" : "חיפוש מוצרים"} aria-expanded={search}
+          aria-controls="header-search" onClick={() => { setSearch((v) => !v); setMobile(false); }}
+        >
+          {search ? <span aria-hidden="true">✕</span> : <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>}
+        </button>
+        <HeaderSearch index={searchIndex} autoFocus={search} />
         <Link href="/cart/" className="pill">
           סל<span className="sr-only"> קניות</span><CartCount />
         </Link>
@@ -135,16 +145,21 @@ function Dropdown({ label, href, k, open, setOpen, enter, leave, current, wide, 
   );
 }
 
-function HeaderSearch({ index }: { index: SearchItem[] }) {
+function HeaderSearch({ index: items, autoFocus }: { index: SearchItem[]; autoFocus: boolean }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const listId = useId();
   const wrap = useRef<HTMLFormElement>(null);
+  const indexed = useMemo(() => items.map((p) => ({ p, words: index(p.name) })), [items]);
 
-  const term = q.trim().toLowerCase();
-  const results = term.length < 2 ? [] : index.filter((p) => p.name.toLowerCase().includes(term)).slice(0, 6);
+  const term = q.trim();
+  const results = term.length < 2 ? [] : indexed.map((x) => ({ p: x.p, s: score(term, x.words) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 6).map((x) => x.p);
+
+  useEffect(() => {
+    if (autoFocus) wrap.current?.querySelector("input")?.focus();
+  }, [autoFocus]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
@@ -154,7 +169,7 @@ function HeaderSearch({ index }: { index: SearchItem[] }) {
 
   return (
     <form
-      ref={wrap} role="search" className="header-search"
+      ref={wrap} id="header-search" role="search" className="header-search"
       onSubmit={(e) => {
         e.preventDefault();
         setOpen(false);

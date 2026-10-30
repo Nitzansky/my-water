@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { HeroCarousel } from "@/components/HeroCarousel";
+import { Reviews } from "@/components/Reviews";
+import { TrustStrip } from "@/components/Trust";
 import { WaterStory } from "@/components/story/WaterStory";
 import { HeroBackdrop } from "@/components/hero/HeroBackdrop";
 import { JsonLd, ProductGrid } from "@/components/ui";
@@ -56,10 +57,6 @@ function imageFor(products: Product[], categoryPath: string) {
 export default async function Home() {
   const [products, best] = await Promise.all([getProducts(), getBestsellers(8)]);
   const bestsellers = best.length >= 4 ? best : products.filter((p) => p.inStock).slice(0, 8);
-  const heroProducts = bestsellers.slice(0, 5).map((p) => ({
-    id: p.id, name: p.name, path: p.path, price: p.price, image: p.images[0]?.src ?? null, inStock: p.inStock,
-    category: (p.categories.find((c) => c.name !== "כללי") ?? p.categories[0])?.name ?? "",
-  }));
 
   return (
     <>
@@ -86,7 +83,12 @@ export default async function Home() {
               <input type="search" name="q" placeholder="חפשו מסנן, דגם או חלק…" aria-label="חיפוש מוצרים" />
               <button type="submit" className="btn btn-primary">חיפוש</button>
             </form>
-            <HeroCarousel products={heroProducts} />
+            {/* Two clear next steps: buy (the shop) or get a technician. */}
+            <div className="hero-paths">
+              <Link href="/shop/" className="btn btn-primary">לחנות המוצרים <span aria-hidden="true">←</span></Link>
+              <Link href="/טכנאי-תמי-4/" className="btn hero-paths__tech">הזמנת טכנאי <span aria-hidden="true">←</span></Link>
+            </div>
+            <TrustStrip reviewsHref="#reviews" />
           </div>
         </div>
       </section>
@@ -132,6 +134,8 @@ export default async function Home() {
           </div>
           <ProductGrid products={bestsellers} label="הנמכרים ביותר" />
         </section>
+
+        <Reviews />
 
         <section className="dark-band tech-band" aria-labelledby="tech">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

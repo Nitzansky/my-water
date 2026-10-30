@@ -39,13 +39,14 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const path = toPath((await params).slug);
-  const entry = await getEntryByPath(path);
+  // Both contact URLs show the "/contact/" page (the old "/צור-קשר/" holds unrendered 2014 shortcodes).
+  const entry = await getEntryByPath(CONTACT_PATHS.has(path) ? "/contact/" : path);
   if (!entry) return {};
   const description = entry.seo?.description || plainText(entry.excerpt || entry.content).slice(0, 155);
   return {
     title: { absolute: entry.seo?.title?.replace(/ - My Water$/, " | myWater") ?? `${entry.title} | myWater` },
     description,
-    alternates: { canonical: path },
+    alternates: { canonical: CONTACT_PATHS.has(path) ? "/contact/" : path },
     openGraph: {
       title: entry.title, description, url: path, type: entry.type === "post" ? "article" : "website",
       images: entry.seo?.ogImage ? [entry.seo.ogImage] : entry.featuredImage ? [entry.featuredImage] : [],
@@ -57,14 +58,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EntryPage({ params }: Props) {
   const path = toPath((await params).slug);
   if (STORE_PATHS.has(path)) return <StorePage />;
+  if (CONTACT_PATHS.has(path)) {
+    const contact = await getEntryByPath("/contact/");
+    if (!contact) notFound();
+    return <ContactPage entry={contact} />;
+  }
   const entry = await getEntryByPath(path);
   if (!entry) notFound();
   if (ARCHIVE_PATHS.has(path)) return <Articles title={entry.title} />;
   if (ACCOUNT_PATHS.has(path)) return <AccountNotice title={entry.title} />;
-  return entry.type === "post" ? <Article entry={entry} /> : <ContentPage entry={entry} contact={CONTACT_PATHS.has(path)} />;
+  return entry.type === "post" ? <Article entry={entry} /> : <ContentPage entry={entry} />;
 }
 
-async function ContentPage({ entry, contact }: { entry: Entry; contact: boolean }) {
+async function ContentPage({ entry }: { entry: Entry }) {
   const html = cleanHtml(entry.content);
   // Product/category links that lived in builder widgets (dropped by cleanHtml) become live cards.
   const kept = linkedPaths(html);
@@ -76,15 +82,14 @@ async function ContentPage({ entry, contact }: { entry: Entry; contact: boolean 
   ]);
   const linkedProducts = productPaths.flatMap((p) => products.find((x) => x.path === p) ?? []);
   const linkedCats = catPaths.flatMap((p) => categories.find((x) => x.path === p) ?? []);
-  const form = FORMS[entry.path] ?? (contact ? FORMS["/contact/"] : undefined);
+  const form = FORMS[entry.path];
   return (
     <div className="container page">
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <Breadcrumbs items={[{ label: entry.title }]} />
         <h1 className="h1">{entry.title}</h1>
       </div>
-      {contact && <ContactBlock />}
-      {form && !contact && <LeadForm {...form} source={entry.path} />}
+      {form && <LeadForm {...form} source={entry.path} />}
       {html && <section className="glass panel content-panel"><div className="prose" dangerouslySetInnerHTML={{ __html: html }} /></section>}
       {linkedProducts.length > 0 && <ProductGrid products={linkedProducts} label={entry.title} />}
       {linkedCats.length > 0 && (
@@ -92,8 +97,6 @@ async function ContentPage({ entry, contact }: { entry: Entry; contact: boolean 
           {linkedCats.map((c) => <Link key={c.id} href={c.path} className="pill">{c.name} <span className="pill__count">({c.count})</span></Link>)}
         </nav>
       )}
-      {form && contact && <LeadForm {...form} source={entry.path} />}
-      {contact && <MapBlock />}
       <CtaBand />
     </div>
   );
@@ -169,10 +172,29 @@ function AccountNotice({ title }: { title: string }) {
   );
 }
 
+// Contact: how to reach us and the form side by side, then the map.
+function ContactPage({ entry }: { entry: Entry }) {
+  return (
+    <div className="container page">
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <Breadcrumbs items={[{ label: entry.title, href: "/contact/" }]} />
+        <h1 className="h1">{entry.title}</h1>
+        {/* The page's own intro text (WordPress "/contact/"). */}
+        <p className="lead" style={{ maxWidth: 720 }}>אנו, MY – WATER מערכות מים, פתוחים וקשובים לכל בעיה או הצעה יוזמה ושיתופי פעולה שונים ניתן גם למלא את הטופס ונשוב בהקדם האפשרי.</p>
+      </div>
+      <div className="contact-grid">
+        <ContactBlock />
+        <LeadForm {...FORMS["/contact/"]} source={entry.path} />
+      </div>
+      <MapBlock />
+    </div>
+  );
+}
+
 function ContactBlock() {
   return (
-    <section className="glass panel" style={{ maxWidth: 720 }} aria-labelledby="talk">
-      <h2 id="talk" className="h2">דברו איתנו</h2>
+    <section className="glass panel contact-block" aria-labelledby="talk">
+      <h2 id="talk" className="h2">פרטי יצירת קשר</h2>
       <a href={SITE.phoneHref} style={{ font: "300 2.125rem/1.2 var(--font-display)" }}><span dir="ltr">{SITE.phone}</span></a>
       <a href={SITE.phone2Href} style={{ font: "300 1.625rem/1.2 var(--font-display)", color: "var(--body)" }}><span dir="ltr">{SITE.phone2}</span></a>
       <a href={`mailto:${SITE.email}`} style={{ font: "600 1rem/1.4 var(--font-ui)", color: "var(--brand)" }}>{SITE.email}</a>

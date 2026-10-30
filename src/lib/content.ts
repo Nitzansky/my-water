@@ -21,6 +21,17 @@ const REMOVE = [
 
 export function cleanHtml(html: string, opts: { demoteH1?: boolean } = {}): string {
   const $ = cheerio.load(html, null, false);
+  // Elementor toggles/accordions (e.g. the Tami 4 faults) become native <details>. Items that held a lead
+  // form get a "book a technician for this fault" button instead (LeadForm picks it up, see FaultButtons).
+  $(".elementor-toggle-item, .elementor-accordion-item").each((_, el) => {
+    const item = $(el);
+    const title = item.find(".elementor-tab-title").first().text().trim();
+    const body = item.find(".elementor-tab-content").first();
+    const hadForm = body.find("form, .elementor-widget-form").length > 0;
+    body.find(REMOVE).remove();
+    const button = hadForm ? `<p><button type="button" class="btn btn-primary" data-fault="${escapeAttr(title)}">הזמנת טכנאי לתקלה הזו</button></p>` : "";
+    item.replaceWith(`<details class="toggle"><summary>${escapeHtml(title)}</summary><div>${body.html() ?? ""}${button}</div></details>`);
+  });
   $(REMOVE).remove();
   // lazy-loaded images keep the real URL in data-src / data-lazy-src
   $("img").each((_, el) => {
@@ -42,13 +53,14 @@ export function cleanHtml(html: string, opts: { demoteH1?: boolean } = {}): stri
     allowedTags: [
       "h2", "h3", "h4", "h5", "h6", "p", "br", "hr", "ul", "ol", "li", "a", "strong", "b", "em", "i", "u", "span",
       "blockquote", "figure", "figcaption", "img", "table", "thead", "tbody", "tr", "th", "td", "caption", "iframe",
-      "div",
+      "div", "details", "summary", "button",
     ],
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
       img: ["src", "alt", "width", "height"],
       iframe: ["src", "title", "width", "height", "allowfullscreen"],
       td: ["colspan", "rowspan"], th: ["colspan", "rowspan", "scope"],
+      details: ["class"], button: ["type", "class", "data-fault"],
     },
     allowedIframeHostnames: ["www.youtube.com", "www.youtube-nocookie.com", "www.google.com", "maps.google.com"],
     transformTags: {
@@ -79,6 +91,9 @@ export function cleanHtml(html: string, opts: { demoteH1?: boolean } = {}): stri
   }
   return $$.html().trim();
 }
+
+const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeAttr = (s: string) => escapeHtml(s).replace(/"/g, "&quot;");
 
 export function plainText(html: string): string {
   return cheerio.load(html, null, false).text().replace(/\s+/g, " ").trim();

@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { StoreBrowser } from "./StoreBrowser";
-import { Breadcrumbs, CtaBand, ProductGrid } from "./ui";
+import { Breadcrumbs, CtaBand } from "./ui";
 import { PRODUCT_MENU } from "@/lib/site";
 import { getCategories, getProducts } from "@/lib/wp";
 
@@ -20,9 +19,7 @@ export async function StorePage({ title = "המוצרים שלנו", crumb = "ה
         </div>
       </div>
 
-      <Suspense fallback={<ProductGrid products={light} />}>
-        <StoreBrowser products={light} chips={PRODUCT_MENU} />
-      </Suspense>
+      <StoreBrowser products={light} chips={PRODUCT_MENU} />
 
       <section aria-labelledby="all-cats" className="all-cats">
         <h2 id="all-cats" className="kicker" style={{ margin: 0 }}>כל הקטגוריות באתר</h2>

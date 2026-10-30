@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BuyButtons } from "@/components/BuyButtons";
 import { Gallery } from "@/components/Gallery";
+import { TrustStrip } from "@/components/Trust";
 import { Breadcrumbs, CtaBand, JsonLd, Price, ProductGrid } from "@/components/ui";
 import { cleanHtml, plainText } from "@/lib/content";
-import { SITE } from "@/lib/site";
+import { SITE, TRUST } from "@/lib/site";
 import { decode, getProduct, getProducts, getProductSeo } from "@/lib/wp";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -66,6 +67,7 @@ export default async function ProductPage({ params }: Props) {
             <li>✓ אפשרות להתקנה עם טכנאי</li>
             <li>✓ ייעוץ בטלפון <a href={SITE.phoneHref} dir="ltr">{SITE.phone}</a></li>
           </ul>
+          <TrustStrip compact items={TRUST.slice(0, 2)} />
           {product.sku && <p className="product-info__meta">מק״ט: {product.sku}</p>}
         </div>
       </section>

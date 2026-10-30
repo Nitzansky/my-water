@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "bad request" }, { status: 400 });
   }
   const lead = {
-    name: clip(body.name), phone: clip(body.phone), email: clip(body.email), message: clip(body.message),
+    name: clip(body.name), phone: clip(body.phone), email: clip(body.email), message: clip(body.message), fault: clip(body.fault),
     source: clip(body.source), consent: body.consent === "on", receivedAt: new Date().toISOString(),
   };
   if (!lead.name || !/^0\d{8,9}$/.test(lead.phone.replace(/\D/g, "")) || !lead.consent) {
