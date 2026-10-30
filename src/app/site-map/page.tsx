@@ -21,7 +21,7 @@ export default async function SiteMapPage() {
       <div className="sitemap-grid">
         {groups.map((g) => (
           <section key={g.title} className="glass panel" aria-labelledby={g.title}>
-            <h2 id={g.title} className="h2" style={{ fontSize: 30 }}>{g.title}</h2>
+            <h2 id={g.title} className="h2" style={{ fontSize: "1.875rem" }}>{g.title}</h2>
             <ul className="sitemap-list">{g.links.map((l) => <li key={l.href}><Link href={l.href}>{l.label}</Link></li>)}</ul>
           </section>
         ))}

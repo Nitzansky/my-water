@@ -44,7 +44,7 @@ export default async function CategoryPage({ params }: Props) {
 
       <div className="store-head">
         <h2 className="h2">{children.length ? `כל המוצרים ב${cat.name}` : "המוצרים"}</h2>
-        <span style={{ font: "400 15px/1.5 var(--font-ui)", color: "var(--muted)" }}>{products.length === 1 ? "מוצר אחד" : `${products.length} מוצרים`}</span>
+        <span style={{ font: "400 0.9375rem/1.5 var(--font-ui)", color: "var(--muted)" }}>{products.length === 1 ? "מוצר אחד" : `${products.length} מוצרים`}</span>
       </div>
       {products.length ? (
         <ProductGrid products={products} label={cat.name} />

@@ -33,7 +33,7 @@ export function BuyButtons({ product, inStock, large }: Props) {
     <>
       {large && (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span id={`qty-${product.id}`} style={{ font: "600 15px/1 var(--font-ui)", color: "var(--body)" }}>כמות</span>
+          <span id={`qty-${product.id}`} style={{ font: "600 0.9375rem/1 var(--font-ui)", color: "var(--body)" }}>כמות</span>
           <div className="stepper" role="group" aria-labelledby={`qty-${product.id}`}>
             <button type="button" aria-label="הוספת יחידה" onClick={() => setQty((q) => q + 1)}>+</button>
             <output aria-live="polite">{qty}</output>

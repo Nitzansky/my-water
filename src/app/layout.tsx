@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Assistant, Frank_Ruhl_Libre } from "next/font/google";
+import { A11Y_BOOT, AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { CartProvider } from "@/components/cart";
 import { Header } from "@/components/Header";
 import { Footer, JsonLd, WhatsAppFab } from "@/components/ui";
@@ -27,8 +28,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const searchIndex = products.map((p) => ({ name: p.name, path: p.path, image: p.images[0]?.src ?? null }));
 
   return (
-    <html lang="he" dir="rtl" className={`${frank.variable} ${assistant.variable}`}>
-      {/* browser extensions (e.g. ColorZilla) add attributes to <body> before hydration */}
+    // suppressHydrationWarning: A11Y_BOOT sets the visitor's saved text size/modes on <html> before hydration,
+    // and browser extensions (e.g. ColorZilla) add attributes to <body>.
+    <html lang="he" dir="rtl" className={`${frank.variable} ${assistant.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: A11Y_BOOT }} />
+      </head>
       <body suppressHydrationWarning>
         <a href="#main" className="skip-link">דילוג לתוכן הראשי</a>
         <div className="site-bg" aria-hidden="true" />
@@ -37,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <main id="main" tabIndex={-1}>{children}</main>
           <Footer />
           <WhatsAppFab />
+          <AccessibilityMenu />
         </CartProvider>
         <JsonLd
           data={{

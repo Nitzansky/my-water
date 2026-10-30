@@ -71,7 +71,7 @@ export function StoreBrowser({ products, chips }: { products: Product[]; chips: 
               <option value="name">שם: א–ת</option>
             </select>
           </label>
-          <span role="status" style={{ font: "400 15px/1.5 var(--font-ui)", color: "var(--muted)" }}>
+          <span role="status" style={{ font: "400 0.9375rem/1.5 var(--font-ui)", color: "var(--muted)" }}>
             {list.length === 1 ? "מוצר אחד" : `${list.length} מוצרים`}
           </span>
         </div>
@@ -82,7 +82,7 @@ export function StoreBrowser({ products, chips }: { products: Product[]; chips: 
           {list.map((p, i) => <li key={p.id}><ProductCard product={p} priority={i < 4} /></li>)}
         </ul>
       ) : (
-        <p style={{ margin: 0, padding: "48px 0", font: "300 28px/1.3 var(--font-display)", color: "var(--body)", textAlign: "center" }}>
+        <p style={{ margin: 0, padding: "48px 0", font: "300 1.75rem/1.3 var(--font-display)", color: "var(--body)", textAlign: "center" }}>
           לא מצאנו מוצר שמתאים. <a href="tel:0504032033" style={{ color: "var(--brand)" }}>התקשרו ונעזור</a>
         </p>
       )}

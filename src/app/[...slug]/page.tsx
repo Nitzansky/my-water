@@ -173,11 +173,11 @@ function ContactBlock() {
   return (
     <section className="glass panel" style={{ maxWidth: 720 }} aria-labelledby="talk">
       <h2 id="talk" className="h2">דברו איתנו</h2>
-      <a href={SITE.phoneHref} style={{ font: "300 34px/1.2 var(--font-display)" }}><span dir="ltr">{SITE.phone}</span></a>
-      <a href={SITE.phone2Href} style={{ font: "300 26px/1.2 var(--font-display)", color: "var(--body)" }}><span dir="ltr">{SITE.phone2}</span></a>
-      <a href={`mailto:${SITE.email}`} style={{ font: "600 16px/1.4 var(--font-ui)", color: "var(--brand)" }}>{SITE.email}</a>
+      <a href={SITE.phoneHref} style={{ font: "300 2.125rem/1.2 var(--font-display)" }}><span dir="ltr">{SITE.phone}</span></a>
+      <a href={SITE.phone2Href} style={{ font: "300 1.625rem/1.2 var(--font-display)", color: "var(--body)" }}><span dir="ltr">{SITE.phone2}</span></a>
+      <a href={`mailto:${SITE.email}`} style={{ font: "600 1rem/1.4 var(--font-ui)", color: "var(--brand)" }}>{SITE.email}</a>
       <a href={SITE.whatsapp} target="_blank" rel="noopener" className="btn btn-wa" style={{ alignSelf: "flex-start" }}>וואטסאפ</a>
-      <address style={{ fontStyle: "normal", font: "400 16px/1.5 var(--font-ui)", color: "var(--body)" }}>{SITE.address}</address>
+      <address style={{ fontStyle: "normal", font: "400 1rem/1.5 var(--font-ui)", color: "var(--body)" }}>{SITE.address}</address>
     </section>
   );
 }
@@ -188,7 +188,7 @@ function MapBlock() {
       <div style={{ height: "clamp(240px,34vw,380px)", borderRadius: "var(--r-24)", overflow: "hidden", border: "1px solid var(--glass-border)" }}>
         <iframe title="מפה — myWater כפר סבא" src={`https://www.google.com/maps?q=${SITE.geo.lat},${SITE.geo.lng}&z=16&output=embed`} loading="lazy" style={{ width: "100%", height: "100%", border: 0 }} />
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, font: "600 15px/1.3 var(--font-ui)" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, font: "600 0.9375rem/1.3 var(--font-ui)" }}>
         <a href={`https://www.google.com/maps/search/?api=1&query=${SITE.geo.lat},${SITE.geo.lng}`} style={{ color: "var(--brand)" }} target="_blank" rel="noopener">ניווט עם Google Maps ←</a>
         <a href={SITE.googleBusiness} style={{ color: "var(--brand)" }} target="_blank" rel="noopener">Google לעסק שלי ←</a>
       </div>

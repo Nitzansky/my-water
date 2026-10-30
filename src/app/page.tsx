@@ -110,7 +110,7 @@ export default async function Home() {
         <section aria-labelledby="best" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div className="store-head">
             <h2 id="best" className="h2">הנמכרים ביותר</h2>
-            <Link href="/shop/" style={{ font: "600 16px/1 var(--font-ui)", color: "var(--brand)" }}>לכל החנות ←</Link>
+            <Link href="/shop/" style={{ font: "600 1rem/1 var(--font-ui)", color: "var(--brand)" }}>לכל החנות ←</Link>
           </div>
           <ProductGrid products={bestsellers} label="הנמכרים ביותר" />
         </section>
@@ -119,13 +119,13 @@ export default async function Home() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <span className="kicker" style={{ color: "#9fd3f5" }}>טכנאי תמי 4 פרטי · 30 שנות ניסיון</span>
             <h2 id="tech" className="h2" style={{ color: "#fff" }}>התמי 4 לא עובד?</h2>
-            <p style={{ margin: 0, font: "400 17px/1.6 var(--font-ui)", color: "var(--on-dark-muted)" }}>תיקון מהיר ויסודי, חלפים מקוריים וחדשים, ו־100% אחריות על העבודה.</p>
-            <p style={{ margin: 0, font: "400 14px/1.5 var(--font-ui)", color: "var(--on-dark-muted)" }}>* לא חברת תמי 4 — שירות תיקונים פרטי</p>
+            <p style={{ margin: 0, font: "400 1.0625rem/1.6 var(--font-ui)", color: "var(--on-dark-muted)" }}>תיקון מהיר ויסודי, חלפים מקוריים וחדשים, ו־100% אחריות על העבודה.</p>
+            <p style={{ margin: 0, font: "400 0.875rem/1.5 var(--font-ui)", color: "var(--on-dark-muted)" }}>* לא חברת תמי 4 — שירות תיקונים פרטי</p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <span style={{ font: "600 15px/1 var(--font-ui)", color: "var(--on-dark-muted)" }}>תקלות נפוצות:</span>
+            <span style={{ font: "600 0.9375rem/1 var(--font-ui)", color: "var(--on-dark-muted)" }}>תקלות נפוצות:</span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {FAULTS.map((f) => <Link key={f.label} href={f.href} className="btn btn-outline-light" style={{ minHeight: 44, fontSize: 15 }}>{f.label}</Link>)}
+              {FAULTS.map((f) => <Link key={f.label} href={f.href} className="btn btn-outline-light" style={{ minHeight: 44, fontSize: "0.9375rem" }}>{f.label}</Link>)}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               <Link href="/טכנאי-תמי-4/" className="btn btn-white">הזמנת טכנאי תמי 4 ←</Link>
@@ -149,7 +149,7 @@ export default async function Home() {
         <section className="dark-band" aria-labelledby="last">
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <h2 id="last" className="h2" style={{ color: "#fff" }}>מתי החלפתם מסנן לאחרונה?</h2>
-            <p style={{ margin: 0, font: "400 16px/1.55 var(--font-ui)", color: "var(--on-dark-muted)" }}>מסננים לתמי 4, אוסמוזה הפוכה ומסנני אבנית — עם טכנאי עד הבית.</p>
+            <p style={{ margin: 0, font: "400 1rem/1.55 var(--font-ui)", color: "var(--on-dark-muted)" }}>מסננים לתמי 4, אוסמוזה הפוכה ומסנני אבנית — עם טכנאי עד הבית.</p>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifySelf: "end" }}>
             <Link href="/טכנאי-תמי-4/" className="btn btn-white">הזמנת טכנאי</Link>

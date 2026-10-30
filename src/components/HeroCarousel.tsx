@@ -30,7 +30,7 @@ export function HeroCarousel({ products }: { products: HeroProduct[] }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           <span className="kicker">{p.category}</span>
           <Link href={p.path} className="hero-card__name">{p.name}</Link>
-          <span className="price" style={{ fontSize: 24 }}>{formatPrice(p.price)}</span>
+          <span className="price" style={{ fontSize: "1.5rem" }}>{formatPrice(p.price)}</span>
         </div>
       </div>
       <BuyButtons inStock={p.inStock} product={{ id: p.id, name: p.name, price: p.price, path: p.path, image: p.image }} />

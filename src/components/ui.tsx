@@ -109,7 +109,7 @@ export function CtaBand({ title = "לא בטוחים מה מתאים?", text = "
     <section className="dark-band" aria-label={title}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h2 className="h2" style={{ color: "#fff" }}>{title}</h2>
-        <p style={{ margin: 0, font: "400 16px/1.55 var(--font-ui)", color: "var(--on-dark-muted)" }}>{text}</p>
+        <p style={{ margin: 0, font: "400 1rem/1.55 var(--font-ui)", color: "var(--on-dark-muted)" }}>{text}</p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifySelf: "end" }}>
         <a href={SITE.phoneHref} className="btn btn-white"><span dir="ltr">{SITE.phone}</span></a>
