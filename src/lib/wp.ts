@@ -73,8 +73,11 @@ function get<T>(endpoint: string): Promise<{ data: T; totalPages: number }> {
 async function fetchWp<T>(endpoint: string): Promise<{ data: T; totalPages: number }> {
   for (let attempt = 0; ; attempt++) {
     const res = await fetch(`${WP}${endpoint}`, { next: { revalidate: REVALIDATE }, headers: { "User-Agent": "myWater-frontend" } });
-    if (res.ok) return { data: (await res.json()) as T, totalPages: Number(res.headers.get("x-wp-totalpages") ?? 1) };
-    if (!RETRYABLE.has(res.status) || attempt >= 3) throw new Error(`WordPress ${res.status} for ${endpoint}`);
+    // An HTML answer with 200 is the host's busy/protection page, not data: treat it like a 503.
+    const json = (res.headers.get("content-type") ?? "").includes("json");
+    if (res.ok && json) return { data: (await res.json()) as T, totalPages: Number(res.headers.get("x-wp-totalpages") ?? 1) };
+    const status = res.ok ? 503 : res.status;
+    if (!RETRYABLE.has(status) || attempt >= 3) throw new Error(`WordPress ${res.status}${json ? "" : " (non-JSON)"} for ${endpoint}`);
     await new Promise((r) => setTimeout(r, 1500 * 2 ** attempt));
   }
 }
