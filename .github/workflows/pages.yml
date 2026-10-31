@@ -34,6 +34,9 @@ jobs:
         env:
           STATIC_EXPORT: "true"
           NEXT_PUBLIC_BASE_PATH: /my-water
+          # Google reviews (Places API): a browser key restricted to the site's domains; set as repository variables.
+          NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${{ vars.GOOGLE_MAPS_KEY }}
+          NEXT_PUBLIC_GOOGLE_PLACE_ID: ${{ vars.GOOGLE_PLACE_ID }}
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

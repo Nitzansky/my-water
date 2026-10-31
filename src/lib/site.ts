@@ -16,8 +16,6 @@ export const SITE = {
   city: "כפר סבא",
   geo: { lat: 32.1711322, lng: 34.9070395 },
   googleBusiness: "https://www.google.com/maps/place/My+Water/@32.1711322,34.9070395,17z",
-  // The live site's Google Reviews widget (Elfsight) — the business's real Google reviews.
-  reviewsWidget: "elfsight-app-e2b28c02-cf7b-4354-8db3-8f0d7900b23a",
   legalNote: "myWater היא חברת שירות פרטית ואינה קשורה לחברת תמי 4.",
 };
 
